@@ -14,11 +14,11 @@
  * Author: TarmoPikaro
  * URL: https://stackoverflow.com/a/35658917/12586927
  * License: https://creativecommons.org/licenses/by-sa/4.0/
- * No changes were made
+ * Retrieved from https://github.com/TechnologicNick/SteamChangePreview
+ * Modified to fit both Windows and Linux supposedly, not fully tested for now
  */
 
-
-
+ 
 // Execute a command and get the results. (Only standard output)
 #ifdef _WIN32
 inline CStringA ExecCmd(const wchar_t* cmd)
