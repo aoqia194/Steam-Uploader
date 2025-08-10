@@ -1,23 +1,32 @@
-#include <iostream>
-#include "steam/steam_api.h"
 #include "Uploader.h"
 
 UGCUpdateHandle_t Uploader::UploadItem(int workshopID, const std::string& description)
 {
     UGCUpdateHandle_t updateHandle = SteamUGC()->StartItemUpdate(SteamUtils()->GetAppID(), workshopID);
 
-    bool titleSet = SteamUGC()->SetItemTitle(updateHandle, "Uploader test");
-    bool descriptionSet = SteamUGC()->SetItemDescription(updateHandle, description.c_str());
-    bool contentSet = SteamUGC()->SetItemContent(updateHandle, "/home/simon/Documents/Repositories/Steam-Uploader/TestUpload");
+    // title
+    // bool titleSet = SteamUGC()->SetItemTitle(updateHandle, "Uploader test");
+    // std::cout << "Title set: " << titleSet << "\n";
+    
+    // description
+    // bool descriptionSet = SteamUGC()->SetItemDescription(updateHandle, description.c_str());
+    // std::cout << "Description set: " << descriptionSet << "\n";
+    
+    // content
+    // bool contentSet = SteamUGC()->SetItemContent(updateHandle, "/home/simon/Documents/test/testMod");
+    // std::cout << "Content set: " << contentSet << "\n";
+    
+    // preview
     bool previewSet = SteamUGC()->SetItemPreview(updateHandle, "/home/simon/Documents/Repositories/Steam-Uploader/preview.png");
-    bool visibilitySet = SteamUGC()->SetItemVisibility(updateHandle, k_ERemoteStoragePublishedFileVisibilityPublic);
-
-    std::cout << "Title set: " << titleSet << "\n";
-    std::cout << "Description set: " << descriptionSet << "\n";
-    std::cout << "Content set: " << contentSet << "\n";
     std::cout << "Preview set: " << previewSet << "\n";
-    std::cout << "Visibility set: " << visibilitySet << "\n";
+    
+    // visibility
+    // bool visibilitySet = SteamUGC()->SetItemVisibility(updateHandle, k_ERemoteStoragePublishedFileVisibilityPublic);
+    // std::cout << "Visibility set: " << visibilitySet << "\n";
 
+
+    
+    // https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdate
     SteamAPICall_t apiCall = SteamUGC()->SubmitItemUpdate(updateHandle, "Test upload");
     m_callResultSubmit.Set(apiCall, this, &Uploader::OnSubmitItemUpdateResult);
 
@@ -44,6 +53,9 @@ void Uploader::OnSubmitItemUpdateResult(SubmitItemUpdateResult_t* pResult, bool 
     if (pResult->m_eResult == k_EResultOK) {
         std::cout << "Item update submitted successfully!\n";
     } else {
+
+        // Enum doc: https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdateResult_t
+
         std::cerr << "Failed to submit item update. Error: " << pResult->m_eResult << "\n";
         std::cerr << "Error enum: ";
         switch (pResult->m_eResult) {

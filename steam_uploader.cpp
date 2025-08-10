@@ -1,15 +1,62 @@
-#include "steam/steam_api.h"
-#include <iostream>
 #include <thread>
+#include <fstream>
+#include <string>
 #include "Uploader.h"
+#include "WarningHook.h"
+#include "ExecCmd.h"
 
+// Tries to implement this:
+// https://partner.steamgames.com/doc/features/workshop/implementation#uploading_a_workshop_item
+
+
+
+// source: https://github.com/TechnologicNick/SteamChangePreview/blob/master/SteamChangePreview/SteamChangePreview.cpp
+void SetAppId(AppId_t appid) {
+	printf("Writing appid to steam_appid.txt\n");
+	std::ofstream myfile;
+	myfile.open("steam_appid.txt");
+	myfile << appid;
+	myfile.close();
+}
+
+// source: https://github.com/TechnologicNick/SteamChangePreview/blob/master/SteamChangePreview/SteamChangePreview.cpp
+#ifdef _WIN32
+AppId_t getAppid(PublishedFileId_t publishedfileid) {
+    std::wstring str(L"powershell -c \"[regex]::Matches((Invoke-WebRequest -Uri \\\"https://steamcommunity.com/sharedfiles/filedetails/?id=");
+    str += std::to_wstring(publishedfileid);
+    str += std::wstring(L"\\\" ).Content, 'data-appid=\\\"(\\d+?)\\\">').Groups[1].Value\"");
+    auto out = ExecCmd(str.c_str());
+    return strtoul(out, NULL, 10);
+}
+#else
+AppId_t getAppid(PublishedFileId_t publishedfileid) {
+    std::string str = "curl -s 'https://steamcommunity.com/sharedfiles/filedetails/?id=";
+    str += std::to_string(publishedfileid);
+    str += "' | grep -o 'data-appid=\"[0-9]*' | grep -o '[0-9]*'";
+    std::string out = ExecCmd(str.c_str());
+    return strtoul(out.c_str(), NULL, 10);
+}
+#endif
 
 int main() {
+    long workshopID = 3545758025;
+
+
+    AppId_t appid = getAppid(workshopID);
+    if (appid == 0) {
+        std::cerr << "Failed to retrieve AppId for workshop item: " << workshopID << "\n";
+        return 1;
+    }
+    
+    SetAppId(appid);
     if (SteamAPI_Init()) {
         std::cout << "Steam API initialized!\n";
-        // You can now use ISteamUGC to upload mods
+        EnableWarningMessageHook();
 
-        int workshopID = 3545758025;
+
+        uint32 itemState = SteamUGC()->GetItemState(workshopID);
+        std::cout << "Item state: " << itemState << "\n";
+
         std::string description = "This is the description of the workshop item.";
 
         std::cout << description << "\n";
