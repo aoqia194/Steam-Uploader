@@ -4,7 +4,7 @@
 class Uploader
 {
 public:
-    UGCUpdateHandle_t UploadItem(int workshopID, const std::string& description);
+    UGCUpdateHandle_t UploadItem(PublishedFileId_t workshopID, const std::string& description);
     bool CheckProgress(UGCUpdateHandle_t updateHandle);
 
 private:

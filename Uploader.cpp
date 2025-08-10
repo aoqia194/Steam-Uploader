@@ -1,6 +1,6 @@
 #include "Uploader.h"
 
-UGCUpdateHandle_t Uploader::UploadItem(int workshopID, const std::string& description)
+UGCUpdateHandle_t Uploader::UploadItem(PublishedFileId_t workshopID, const std::string& description)
 {
     UGCUpdateHandle_t updateHandle = SteamUGC()->StartItemUpdate(SteamUtils()->GetAppID(), workshopID);
 
@@ -9,8 +9,8 @@ UGCUpdateHandle_t Uploader::UploadItem(int workshopID, const std::string& descri
     // std::cout << "Title set: " << titleSet << "\n";
     
     // description
-    // bool descriptionSet = SteamUGC()->SetItemDescription(updateHandle, description.c_str());
-    // std::cout << "Description set: " << descriptionSet << "\n";
+    bool descriptionSet = SteamUGC()->SetItemDescription(updateHandle, description.c_str());
+    std::cout << "Description set: " << descriptionSet << "\n";
     
     // content
     // bool contentSet = SteamUGC()->SetItemContent(updateHandle, "/home/simon/Documents/test/testMod");

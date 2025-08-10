@@ -39,9 +39,7 @@ AppId_t getAppid(PublishedFileId_t publishedfileid) {
 #endif
 
 int main() {
-    long workshopID = 3545758025;
-
-
+    PublishedFileId_t workshopID = 3545758025;
     AppId_t appid = getAppid(workshopID);
     if (appid == 0) {
         std::cerr << "Failed to retrieve AppId for workshop item: " << workshopID << "\n";
@@ -79,7 +77,7 @@ int main() {
             }
         }
 
-        // SteamAPI_Shutdown();
+        SteamAPI_Shutdown();
     } else {
         std::cerr << "Failed to initialize Steam API.\n";
     }
