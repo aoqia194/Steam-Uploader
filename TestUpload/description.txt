@@ -1,0 +1,5 @@
+This is the description for my mod
+
+Here is a newline to test newlines don't fuck up in Steamworks SDK.
+
+[url=https://steamcommunity.com/]This is bbcode test[/url]

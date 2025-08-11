@@ -4,8 +4,10 @@
 #include "steam/steam_api.h"
 
 // random tools
-#include "Util/ExecCmd.h"
+// #include "Util/ExecCmd.h"
 // #include "Util/WarningHook.h"
+#include "Util/ReadFile.h"
+#include "Util/AppID.h"
 
 // enums
 #include "Enum/EResult.h"
@@ -13,13 +15,10 @@
 
 // other
 #include <iostream>
-#include <fstream>
 #include <thread>
+#include <string>
+using std::string;
 
-
-// utility functions
-void setAppID(AppId_t appid);
-AppId_t getAppID(PublishedFileId_t publishedfileid);
 
 
 // main uploader class
@@ -27,15 +26,18 @@ class Uploader
 {
 public:
     // INIT
-    Uploader(PublishedFileId_t workshopID);
+    Uploader(PublishedFileId_t workshopID, AppId_t appID);
 
     // METHODS
-    void UpdateItem();
+    // main call
+    void UpdateItem(string description, string preview, string content, string title, ERemoteStoragePublishedFileVisibility visibility);
+
+
     bool UpdateAppID();
     bool InitSteamAPI();
     bool ShutdownSteamAPI();
     void SetInformations(UGCUpdateHandle_t &updateHandle);
-    bool CheckProgress(UGCUpdateHandle_t updateHandle);
+    bool CheckProgress(UGCUpdateHandle_t updateHandle, EItemUpdateStatus* previousUpdateStatus);
 
 private:
     // MEMBERS
@@ -48,10 +50,10 @@ private:
     UGCUpdateHandle_t CreateUpdateHandle(PublishedFileId_t workshopID);
 
     // update item informations
-    bool SetItemTitle(UGCUpdateHandle_t handle, const char *pchTitle);
-    bool SetItemDescription(UGCUpdateHandle_t handle, const char *pchDescription);
-    bool SetItemContent(UGCUpdateHandle_t handle, const char *pchContent);
-    bool SetItemPreview(UGCUpdateHandle_t handle, const char *pchPreview);
+    bool SetItemTitle(UGCUpdateHandle_t handle, string pchTitle);
+    bool SetItemDescription(UGCUpdateHandle_t handle, string pchDescription);
+    bool SetItemContent(UGCUpdateHandle_t handle, string pchContent);
+    bool SetItemPreview(UGCUpdateHandle_t handle, string pchPreview);
     bool SetItemVisibility(UGCUpdateHandle_t handle, ERemoteStoragePublishedFileVisibility eVisibility);
 
     // submit changes

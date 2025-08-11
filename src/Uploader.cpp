@@ -1,32 +1,6 @@
 #include "Uploader.h"
 
-// source: https://github.com/TechnologicNick/SteamChangePreview/blob/master/SteamChangePreview/SteamChangePreview.cpp
-void setAppID(AppId_t appid) {
-	printf("Writing appid to steam_appid.txt\n");
-	std::ofstream myfile;
-	myfile.open("steam_appid.txt");
-	myfile << appid;
-	myfile.close();
-}
 
-// source: https://github.com/TechnologicNick/SteamChangePreview/blob/master/SteamChangePreview/SteamChangePreview.cpp
-#ifdef _WIN32
-AppId_t getAppID(PublishedFileId_t publishedfileid) {
-    std::wstring str(L"powershell -c \"[regex]::Matches((Invoke-WebRequest -Uri \\\"https://steamcommunity.com/sharedfiles/filedetails/?id=");
-    str += std::to_wstring(publishedfileid);
-    str += std::wstring(L"\\\" ).Content, 'data-appid=\\\"(\\d+?)\\\">').Groups[1].Value\"");
-    auto out = ExecCmd(str.c_str());
-    return strtoul(out, NULL, 10);
-}
-#else
-AppId_t getAppID(PublishedFileId_t publishedfileid) {
-    std::string str = "curl -s 'https://steamcommunity.com/sharedfiles/filedetails/?id=";
-    str += std::to_string(publishedfileid);
-    str += "' | grep -o 'data-appid=\"[0-9]*' | grep -o '[0-9]*'";
-    std::string out = ExecCmd(str.c_str());
-    return strtoul(out.c_str(), NULL, 10);
-}
-#endif
 
 
 
@@ -35,29 +9,70 @@ AppId_t getAppID(PublishedFileId_t publishedfileid) {
 
 // Uploader class implementation
 
-Uploader::Uploader(PublishedFileId_t workshopID) {
+// init
+Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID) {
     this->m_workshopID = workshopID;
-
-    AppId_t appID = getAppID(workshopID);
+    // AppId_t appID = getAppID(workshopID);
     this->m_appID = appID;
 }
 
 // main function
-void Uploader::UpdateItem() {
+void Uploader::UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility) {
     // update AppID and init Steam API
     if (!this->UpdateAppID() || !this->InitSteamAPI()) {
         return;
     }
 
+    // create handle
     UGCUpdateHandle_t updateHandle = CreateUpdateHandle(this->m_workshopID);
 
-    SetInformations(updateHandle);
+    // handle description
+    if (!descriptionPath.empty()) {
+        if (!exists(descriptionPath)) {
+            std::cerr << "Invalid description path: " << descriptionPath << ". Parameter must be a valid file.\n";
+        } else {
+            string description = readTxtFile(descriptionPath);
+            SetItemDescription(updateHandle, description.c_str());
+        }
+    }
+
+    // handle preview
+    if (!previewPath.empty()) {
+        if (!exists(previewPath) || !is_regular_file(previewPath)) {
+            std::cerr << "Invalid preview path: " << previewPath << ". Parameter must be a valid file.\n";
+        } else {
+            SetItemPreview(updateHandle, previewPath.c_str());
+        }
+    }
+
+    // handle content
+    if (!contentPath.empty()) {
+        if (!exists(contentPath) || !is_directory(contentPath)) {
+            std::cerr << "Invalid content path: " << contentPath << ". Parameter must be a valid folder.\n";
+        } else {
+            SetItemContent(updateHandle, contentPath.c_str());
+        }
+    }
+
+    // handle title
+    if (!title.empty()) {
+        SetItemTitle(updateHandle, title.c_str());
+    }
+
+    // handle visibility
+    if (visibility != static_cast<ERemoteStoragePublishedFileVisibility>(-1)) {
+        SetItemVisibility(updateHandle, visibility);
+    }
+
+    // SetInformations(updateHandle);
 
     const char* pchContent = "Test upload"; // temp
     SubmitItemUpdate(updateHandle, pchContent);
 
+    // Use a default value that is not part of the enum by casting an invalid integer
+    EItemUpdateStatus previousUpdateStatus = k_EItemUpdateStatusInvalid;
     while (true) {
-        bool isValid = CheckProgress(updateHandle);
+        bool isValid = CheckProgress(updateHandle, &previousUpdateStatus);
 
         SteamAPI_RunCallbacks();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -112,20 +127,20 @@ UGCUpdateHandle_t Uploader::CreateUpdateHandle(PublishedFileId_t workshopID) {
 }
 
 // update item informations
-bool Uploader::SetItemTitle(UGCUpdateHandle_t handle, const char *pchTitle) {
-    return SteamUGC()->SetItemTitle(handle, pchTitle);
+bool Uploader::SetItemTitle(UGCUpdateHandle_t handle, string pchTitle) {
+    return SteamUGC()->SetItemTitle(handle, pchTitle.c_str());
 }
 
-bool Uploader::SetItemDescription(UGCUpdateHandle_t handle, const char *pchDescription) {
-    return SteamUGC()->SetItemDescription(handle, pchDescription);
+bool Uploader::SetItemDescription(UGCUpdateHandle_t handle, string pchDescription) {
+    return SteamUGC()->SetItemDescription(handle, pchDescription.c_str());
 }
 
-bool Uploader::SetItemContent(UGCUpdateHandle_t handle, const char *pchContent) {
-    return SteamUGC()->SetItemContent(handle, pchContent);
+bool Uploader::SetItemContent(UGCUpdateHandle_t handle, string pchContent) {
+    return SteamUGC()->SetItemContent(handle, pchContent.c_str());
 }
 
-bool Uploader::SetItemPreview(UGCUpdateHandle_t handle, const char *pchPreview) {
-    return SteamUGC()->SetItemPreview(handle, pchPreview);
+bool Uploader::SetItemPreview(UGCUpdateHandle_t handle, string pchPreview) {
+    return SteamUGC()->SetItemPreview(handle, pchPreview.c_str());
 }
 
 bool Uploader::SetItemVisibility(UGCUpdateHandle_t handle, ERemoteStoragePublishedFileVisibility eVisibility) {
@@ -154,7 +169,7 @@ void Uploader::SetInformations(UGCUpdateHandle_t &updateHandle)
 }
 
 // used to check the current upload status
-bool Uploader::CheckProgress(UGCUpdateHandle_t updateHandle)
+bool Uploader::CheckProgress(UGCUpdateHandle_t updateHandle, EItemUpdateStatus* previousUpdateStatus)
 {
     uint64 bytesProcessed = 0;
     uint64 bytes = 0;
@@ -162,10 +177,12 @@ bool Uploader::CheckProgress(UGCUpdateHandle_t updateHandle)
 
     bool isValid = eItemUpdateStatus != k_EItemUpdateStatusInvalid;
 
-    if (isValid) {
+    if (isValid && eItemUpdateStatus != *previousUpdateStatus) {
         std::cout << "Update status: " << GetEItemUpdateStatusDescription(eItemUpdateStatus) << " (" << GetEItemUpdateStatusName(eItemUpdateStatus) << ")\n";
-    };
-    
+
+        *previousUpdateStatus = eItemUpdateStatus;
+    }
+
     return (eItemUpdateStatus != k_EItemUpdateStatusInvalid);
 }
 
