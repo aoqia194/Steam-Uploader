@@ -22,8 +22,9 @@ Below is a list of arguments you can use to update specific elements of your wor
 | Content | <code>-c <span style="color:red">path</span></code> | <code>--content <span style="color:red">path</span></code> | <span style="color:red">Path</span> to the folder of the content to upload. |
 | Title | <code>-t <span style="color:red">title</span></code> | <code>--title <span style="color:red">title</span></code> | <span style="color:red">Title</span> of workshop item. |
 | Visibility | <code>-v <span style="color:red">int</span></code> | <code>--visibility <span style="color:red">int</span></code> | Visibility of the item on the workshop: <ul> <li><code><span style="color:red">0</span></code> for public visibility (default),</li> <li><code><span style="color:red">1</span></code> for friends-only visibility,</li> <li><code><span style="color:red">2</span></code> for private (hidden) visibility.</li> <li><code><span style="color:red">3</span></code> for unlisted visibility.</li> </ul> |
+| Patch note | <code>-P <span style="color:red">path</span></code> | <code>-patchNote <span style="color:red">path</span></code> | <span style="color:red">Path</span> to a text file which holds the patch note of the update. |
 
-`-V` or `--verbose` also exists but is unused.
+*`-V` or `--verbose` also exists but is unused.*
 
 # Details
 Tool was confirmed working on:

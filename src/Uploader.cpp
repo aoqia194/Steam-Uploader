@@ -17,7 +17,7 @@ Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID) {
 }
 
 // main function
-void Uploader::UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility) {
+void Uploader::UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath) {
     // update AppID and init Steam API
     if (!this->UpdateAppID() || !this->InitSteamAPI()) {
         return;
@@ -68,10 +68,18 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
         SetItemVisibility(updateHandle, visibility);
     }
 
-    // SetInformations(updateHandle);
 
-    const char* pchContent = "Test upload"; // temp
-    SubmitItemUpdate(updateHandle, pchContent);
+    // handle patch note
+    string patchNote = ""; // default
+    if (!patchNotePath.empty()) {
+        if (!exists(patchNotePath)) {
+            std::cerr << "Invalid patch note path: " << patchNotePath << ". Parameter must be a valid file.\n";
+        } else {
+            patchNote = readTxtFile(patchNotePath);
+        }
+    }
+
+    SubmitItemUpdate(updateHandle, patchNote);
 
     // Use a default value that is not part of the enum by casting an invalid integer
     EItemUpdateStatus previousUpdateStatus = k_EItemUpdateStatusInvalid;
@@ -153,9 +161,9 @@ bool Uploader::SetItemVisibility(UGCUpdateHandle_t handle, ERemoteStoragePublish
 
 
 // send the update
-void Uploader::SubmitItemUpdate(UGCUpdateHandle_t updateHandle, const char* pchContent) {
+void Uploader::SubmitItemUpdate(UGCUpdateHandle_t updateHandle, string pchContent) {
     // https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdate
-    SteamAPICall_t apiCall = SteamUGC()->SubmitItemUpdate(updateHandle, pchContent);
+    SteamAPICall_t apiCall = SteamUGC()->SubmitItemUpdate(updateHandle, pchContent.c_str());
     m_callResultSubmit.Set(apiCall, this, &Uploader::OnSubmitItemUpdateResult);
 }
 

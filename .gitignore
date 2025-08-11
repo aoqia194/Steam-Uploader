@@ -3,3 +3,5 @@ __pycache__
 old
 steam_debug.sh
 .~lock.Enums.ods#
+app
+steam_appid.txt

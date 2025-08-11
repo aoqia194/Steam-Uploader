@@ -34,7 +34,7 @@ public:
 
     // METHODS
     // main call
-    void UpdateItem(string description, string preview, string content, string title, ERemoteStoragePublishedFileVisibility visibility);
+    void UpdateItem(string description, string preview, string content, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath);
 
 
     bool UpdateAppID();
@@ -61,7 +61,7 @@ private:
     bool SetItemVisibility(UGCUpdateHandle_t handle, ERemoteStoragePublishedFileVisibility eVisibility);
 
     // submit changes
-    void SubmitItemUpdate(UGCUpdateHandle_t updateHandle, const char* pchContent);
+    void SubmitItemUpdate(UGCUpdateHandle_t updateHandle, string pchContent);
 
     // CALLBACKS
     void OnSubmitItemUpdateResult(SubmitItemUpdateResult_t* eResult, bool needUserAgreement);
