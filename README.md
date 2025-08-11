@@ -24,3 +24,9 @@ Below is a list of arguments you can use to update specific elements of your wor
 | Visibility | <code>-v <span style="color:red">int</span></code> | <code>--visibility <span style="color:red">int</span></code> | Visibility of the item on the workshop: <ul> <li><code><span style="color:red">0</span></code> for public visibility (default),</li> <li><code><span style="color:red">1</span></code> for friends-only visibility,</li> <li><code><span style="color:red">2</span></code> for private (hidden) visibility.</li> <li><code><span style="color:red">3</span></code> for unlisted visibility.</li> </ul> |
 
 `-V` or `--verbose` also exists but is unused.
+
+# Details
+Tool was confirmed working on:
+- Linux Mint 22.1 x86_64 (Kernel: 6.8.0-71-generic; Shell: bash 5.2.21)
+
+Built with the [Steamworks SDK v1.62](https://partner.steamgames.com/doc/sdk).
