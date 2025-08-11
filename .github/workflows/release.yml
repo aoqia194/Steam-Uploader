@@ -36,7 +36,12 @@ jobs:
             -L./SteamAPI/win64 -lsteam_api64 \
             -Wl,-rpath,'$ORIGIN/SteamAPI/linux64' \
             -pthread
-          zip -r app-${{ matrix.os }}.zip app-${{ matrix.os }}.exe SteamAPI
+        # Create zip using PowerShell
+      - name: Zip Windows build
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI -DestinationPath app-${{ matrix.os }}.zip
 
       # Upload build artifacts
       - name: Upload build
