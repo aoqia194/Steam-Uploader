@@ -26,6 +26,7 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
     // create handle
     UGCUpdateHandle_t updateHandle = CreateUpdateHandle(this->m_workshopID);
 
+    // TODO: verify that the provided description respects the limitations. See doc on the Steam API function to set the description for a handle which gives the value to check.
     // handle description
     if (!descriptionPath.empty()) {
         if (!exists(descriptionPath)) {
@@ -36,6 +37,7 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
         }
     }
 
+    // TODO: verify preview respects the limitations
     // handle preview
     if (!previewPath.empty()) {
         if (!exists(previewPath) || !is_regular_file(previewPath)) {
@@ -54,11 +56,13 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
         }
     }
 
+    // TODO: verify title respects the limitations, if there is any ?
     // handle title
     if (!title.empty()) {
         SetItemTitle(updateHandle, title.c_str());
     }
 
+    // TODO: verify the provided value is 0 to 3, other values might break ?
     // handle visibility
     if (visibility != static_cast<ERemoteStoragePublishedFileVisibility>(-1)) {
         SetItemVisibility(updateHandle, visibility);

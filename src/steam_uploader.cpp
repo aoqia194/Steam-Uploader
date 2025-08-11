@@ -23,7 +23,7 @@ static struct option long_options[] = {
     {"folder", required_argument, 0, 'f'},
 
     // parameters to upload
-    {"desc", required_argument, 0, 'd'},
+    {"description", required_argument, 0, 'd'},
     {"preview", required_argument, 0, 'p'},
     {"content", required_argument, 0, 'c'},
     {"title", required_argument, 0, 't'},
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     
     bool verbose = false;
 
-    while ((opt = getopt_long(argc, argv, "w:f:d:p:c:t:v:", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc, argv, "a:w:f:d:p:c:t:v:", long_options, &option_index)) != -1)
     {
         switch (opt)
         {
