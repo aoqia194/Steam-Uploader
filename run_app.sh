@@ -1,1 +1,0 @@
-LD_LIBRARY_PATH=./SteamAPI/linux64 ./app -a 108600 -w 3545758025 --description /home/simon/Documents/Repositories/Steam-Uploader/TestUpload/description.txt --preview /home/simon/Documents/Repositories/Steam-Uploader/TestUpload/preview2.gif --content /home/simon/Documents/Repositories/Steam-Uploader/TestUpload --title "Test Upload" --visibility 0
