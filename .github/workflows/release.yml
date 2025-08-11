@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - "v*"   # Triggers only when you push a tag starting with "v"
+      - "v*"   # Trigger only on version tags like v1.0.0
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Linux build
+      # Build on Linux
       - name: Build on Linux
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -24,7 +24,7 @@ jobs:
           make
           mv ./app ./app-linux
 
-      # Windows build
+      # Build on Windows
       - name: Build on Windows
         if: matrix.os == 'windows-latest'
         shell: bash
@@ -35,13 +35,15 @@ jobs:
             -L./SteamAPI/win64 -lsteam_api \
             -pthread
 
-      # Upload build artifacts
-      - name: Upload build
+      # Upload artifact for each OS
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-${{ matrix.os }}
-          path: app*
-          if-no-files-found: error
+          name: ${{ matrix.os }}
+          path: |
+            app-linux
+            app-windows.exe
+          if-no-files-found: ignore
 
   release:
     needs: build
