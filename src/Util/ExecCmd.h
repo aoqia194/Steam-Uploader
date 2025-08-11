@@ -3,7 +3,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#include <atlstr.h>
+#include <string>
 #else
 #include <cstdio>
 #include <cstring>
@@ -21,60 +21,60 @@
  
 // Execute a command and get the results. (Only standard output)
 #ifdef _WIN32
-inline CStringA ExecCmd(const wchar_t* cmd)
+inline std::string ExecCmd(const wchar_t* cmd)
 {
-	CStringA strResult;
-	HANDLE hPipeRead, hPipeWrite;
+    std::string strResult;
+    HANDLE hPipeRead, hPipeWrite;
 
-	SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES) };
-	saAttr.bInheritHandle = TRUE;
-	saAttr.lpSecurityDescriptor = NULL;
+    SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES) };
+    saAttr.bInheritHandle = TRUE;
+    saAttr.lpSecurityDescriptor = NULL;
 
-	if (!CreatePipe(&hPipeRead, &hPipeWrite, &saAttr, 0))
-		return strResult;
+    if (!CreatePipe(&hPipeRead, &hPipeWrite, &saAttr, 0))
+        return strResult;
 
-	STARTUPINFOW si = { sizeof(STARTUPINFOW) };
-	si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-	si.hStdOutput = hPipeWrite;
-	si.hStdError = hPipeWrite;
-	si.wShowWindow = SW_HIDE;
+    STARTUPINFOW si = { sizeof(STARTUPINFOW) };
+    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+    si.hStdOutput = hPipeWrite;
+    si.hStdError = hPipeWrite;
+    si.wShowWindow = SW_HIDE;
 
-	PROCESS_INFORMATION pi = { 0 };
+    PROCESS_INFORMATION pi = { 0 };
 
-	BOOL fSuccess = CreateProcessW(NULL, (LPWSTR)cmd, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-	if (!fSuccess)
-	{
-		CloseHandle(hPipeWrite);
-		CloseHandle(hPipeRead);
-		return strResult;
-	}
+    BOOL fSuccess = CreateProcessW(NULL, (LPWSTR)cmd, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+    if (!fSuccess)
+    {
+        CloseHandle(hPipeWrite);
+        CloseHandle(hPipeRead);
+        return strResult;
+    }
 
-	bool bProcessEnded = false;
-	for (; !bProcessEnded;)
-	{
-		bProcessEnded = WaitForSingleObject(pi.hProcess, 50) == WAIT_OBJECT_0;
-		for (;;)
-		{
-			char buf[1024];
-			DWORD dwRead = 0;
-			DWORD dwAvail = 0;
+    bool bProcessEnded = false;
+    for (; !bProcessEnded;)
+    {
+        bProcessEnded = WaitForSingleObject(pi.hProcess, 50) == WAIT_OBJECT_0;
+        for (;;)
+        {
+            char buf[1024];
+            DWORD dwRead = 0;
+            DWORD dwAvail = 0;
 
-			if (!::PeekNamedPipe(hPipeRead, NULL, 0, NULL, &dwAvail, NULL))
-				break;
-			if (!dwAvail)
-				break;
-			if (!::ReadFile(hPipeRead, buf, min(sizeof(buf) - 1, dwAvail), &dwRead, NULL) || !dwRead)
-				break;
-			buf[dwRead] = 0;
-			strResult += buf;
-		}
-	}
+            if (!::PeekNamedPipe(hPipeRead, NULL, 0, NULL, &dwAvail, NULL))
+                break;
+            if (!dwAvail)
+                break;
+            if (!::ReadFile(hPipeRead, buf, min(sizeof(buf) - 1, dwAvail), &dwRead, NULL) || !dwRead)
+                break;
+            buf[dwRead] = 0;
+            strResult += buf;
+        }
+    }
 
-	CloseHandle(hPipeWrite);
-	CloseHandle(hPipeRead);
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-	return strResult;
+    CloseHandle(hPipeWrite);
+    CloseHandle(hPipeRead);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return strResult;
 }
 #else
 // Linux/Unix version
