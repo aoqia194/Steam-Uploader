@@ -34,7 +34,7 @@ jobs:
             -o ./app-${{ matrix.os }}.exe \
             -I. \
             -L./SteamAPI/win64 -lsteam_api64 \
-            -Wl,-rpath,'$ORIGIN' \
+            -Wl,-rpath,'$ORIGIN/SteamAPI/win64' \
             -pthread
         # Create zip using PowerShell
       - name: Zip Windows build
