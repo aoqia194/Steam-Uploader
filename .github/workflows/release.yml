@@ -23,7 +23,7 @@ jobs:
           sudo apt-get install -y g++ make zip
           make
           mv ./app ./app-${{ matrix.os }}
-          zip -r app-${{ matrix.os }}.zip app-${{ matrix.os }} SteamAPI
+          zip -r app-${{ matrix.os }}.zip app-${{ matrix.os }} SteamAPI/linux64/libsteam_api.so
 
       # Windows build
       - name: Build on Windows
@@ -34,14 +34,14 @@ jobs:
             -o ./app-${{ matrix.os }}.exe \
             -I. \
             -L./SteamAPI/win64 -lsteam_api64 \
-            -Wl,-rpath,'$ORIGIN/SteamAPI/linux64' \
+            -Wl,-rpath,'$ORIGIN' \
             -pthread
         # Create zip using PowerShell
       - name: Zip Windows build
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI -DestinationPath app-${{ matrix.os }}.zip
+          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI/win64/steam_api64.dll -DestinationPath app-${{ matrix.os }}.zip
 
       # Upload build artifacts
       - name: Upload build
