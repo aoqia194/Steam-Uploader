@@ -4,6 +4,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <string>
+#include <algorithm>
 #else
 #include <cstdio>
 #include <cstring>
@@ -63,7 +64,7 @@ inline std::string ExecCmd(const wchar_t* cmd)
                 break;
             if (!dwAvail)
                 break;
-            if (!::ReadFile(hPipeRead, buf, min(sizeof(buf) - 1, dwAvail), &dwRead, NULL) || !dwRead)
+            if (!::ReadFile(hPipeRead, buf, std::min(sizeof(buf) - 1, dwAvail), &dwRead, NULL) || !dwRead)
                 break;
             buf[dwRead] = 0;
             strResult += buf;
