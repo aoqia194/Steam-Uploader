@@ -21,11 +21,17 @@ void setAppID(AppId_t appid) {
 #ifdef _WIN32
 // used to retrieve the appID for a specific workshopID
 AppId_t getAppID(PublishedFileId_t publishedfileid) {
-    std::wstring str(L"powershell -c \"[regex]::Matches((Invoke-WebRequest -Uri \\\"https://steamcommunity.com/sharedfiles/filedetails/?id=");
-    str += std::to_wstring(publishedfileid);
-    str += std::wstring(L"\\\" ).Content, 'data-appid=\\\"(\\d+?)\\\">').Groups[1].Value\"");
+    std::wstring wstr(L"powershell -c \"[regex]::Matches((Invoke-WebRequest -Uri \\\"https://steamcommunity.com/sharedfiles/filedetails/?id=");
+    wstr += std::to_wstring(publishedfileid);
+    wstr += std::wstring(L"\\\" ).Content, 'data-appid=\\\"(\\d+?)\\\">').Groups[1].Value\"");
+
+    // Convert std::wstring to std::string (UTF-8)
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+    std::string str(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &str[0], size_needed, NULL, NULL);
+
     auto out = ExecCmd(str.c_str());
-    return strtoul(out, NULL, 10);
+    return strtoul(out.c_str(), NULL, 10);
 }
 #else
 // Linux equivalent
