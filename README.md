@@ -4,11 +4,11 @@ Custom tool to update items on the Steam Workshop. Allows you to independently u
 ## Uploading
 To use the tool, make sure Steam is launched and use:
 ```bash
-cd <path/to/app>
-LD_LIBRARY_PATH=./SteamAPI/linux64 ./app [--key value]
+cd path/to/app
+./app-{os-name} [--key value]
 ```
-Below is the list of <span style="color: red">mandatory</span> arguments to pass.
 
+Below is the list of <span style="color: red">mandatory</span> arguments to pass.
 | Name | Arg (long) | Arg (short) | Description |
 |--|--|--|--|
 | AppID | <code>-a <span style="color:#0074D9">appID</span></code> | <code>--appID <span style="color:#0074D9">appID</span></code> | The [App ID](https://pzwiki.net/wiki/App_ID) for your game. <BR><BR> If it is not provided, the code tries to retrieve automatically but the process can fail if the item was set to a visibility other than public. |
