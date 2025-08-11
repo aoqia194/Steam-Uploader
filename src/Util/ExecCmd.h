@@ -22,60 +22,60 @@
  
 // Execute a command and get the results. (Only standard output)
 #ifdef _WIN32
-inline std::string ExecCmd(const wchar_t* cmd)
+inline std::string ExecCmd(const char* cmd)
 {
-    std::string strResult;
-    HANDLE hPipeRead, hPipeWrite;
+	std::string result;
+	HANDLE hRead, hWrite;
+	SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
+	if (!CreatePipe(&hRead, &hWrite, &sa, 0)) return result;
 
-    SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES) };
-    saAttr.bInheritHandle = TRUE;
-    saAttr.lpSecurityDescriptor = NULL;
+	STARTUPINFOA si = { 0 };
+	PROCESS_INFORMATION pi = { 0 };
+	si.cb = sizeof(STARTUPINFOA);
+	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	si.hStdOutput = hWrite;
+	si.hStdError = hWrite;
+	si.wShowWindow = SW_HIDE;
 
-    if (!CreatePipe(&hPipeRead, &hPipeWrite, &saAttr, 0))
-        return strResult;
+	std::string cmdline = "cmd.exe /C ";
+	cmdline += cmd;
 
-    STARTUPINFOW si = { sizeof(STARTUPINFOW) };
-    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-    si.hStdOutput = hPipeWrite;
-    si.hStdError = hPipeWrite;
-    si.wShowWindow = SW_HIDE;
+	BOOL success = CreateProcessA(
+		NULL,
+		&cmdline[0],
+		NULL,
+		NULL,
+		TRUE,
+		CREATE_NO_WINDOW,
+		NULL,
+		NULL,
+		&si,
+		&pi
+	);
 
-    PROCESS_INFORMATION pi = { 0 };
+	CloseHandle(hWrite);
 
-    BOOL fSuccess = CreateProcessW(NULL, (LPWSTR)cmd, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-    if (!fSuccess)
-    {
-        CloseHandle(hPipeWrite);
-        CloseHandle(hPipeRead);
-        return strResult;
-    }
+	if (!success) {
+		CloseHandle(hRead);
+		return result;
+	}
 
-    bool bProcessEnded = false;
-    for (; !bProcessEnded;)
-    {
-        bProcessEnded = WaitForSingleObject(pi.hProcess, 50) == WAIT_OBJECT_0;
-        for (;;)
-        {
-            char buf[1024];
-            DWORD dwRead = 0;
-            DWORD dwAvail = 0;
+	char buffer[1024];
+	DWORD bytesRead;
+	while (ReadFile(hRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
+		buffer[bytesRead] = 0;
+		result += buffer;
+	}
 
-            if (!::PeekNamedPipe(hPipeRead, NULL, 0, NULL, &dwAvail, NULL))
-                break;
-            if (!dwAvail)
-                break;
-            if (!::ReadFile(hPipeRead, buf, std::min(sizeof(buf) - 1, dwAvail), &dwRead, NULL) || !dwRead)
-                break;
-            buf[dwRead] = 0;
-            strResult += buf;
-        }
-    }
+	CloseHandle(hRead);
+	WaitForSingleObject(pi.hProcess, INFINITE);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
 
-    CloseHandle(hPipeWrite);
-    CloseHandle(hPipeRead);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    return strResult;
+	// Remove trailing CRLF for consistency with Linux version
+	result.erase(std::remove(result.begin(), result.end(), '\r'), result.end());
+
+	return result;
 }
 #else
 // Linux/Unix version
