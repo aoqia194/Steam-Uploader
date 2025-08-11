@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y g++ make
           make
-          mv ./app ./app-ubuntu-latest
+          mv ./app ./app-${{ matrix.os }}
 
       # Windows build
       - name: Build on Windows
@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           g++ -g $(find ./src -name '*.cpp') \
-            -o ./app-windows.exe \
+            -o ./app-${{ matrix.os }}.exe \
             -I. \
             -L./SteamAPI/win64 -lsteam_api \
             -pthread
