@@ -27,14 +27,13 @@ jobs:
       # Windows build
       - name: Build on Windows
         if: matrix.os == 'windows-latest'
-        shell: pwsh
+        shell: bash
         run: |
-          $ErrorActionPreference = "Stop"
-          # Set up MSVC environment
-          Import-Module "$env:VSCMD_INSTALLATION_PATH/Common7/Tools/Microsoft.VisualStudio.DevShell.dll"
-          Enter-VsDevShell -VsInstallPath $env:VSCMD_INSTALLATION_PATH -Arch amd64
-          # Compile all .cpp files with MSVC
-          cl /EHsc /std:c++17 /I. /I./SteamAPI/win64 /Feapp-${{ matrix.os }}.exe src\*.cpp /link /LIBPATH:./SteamAPI/win64 steam_api64.lib
+          g++ -g $(find ./src -name '*.cpp') \
+            -o ./app-${{ matrix.os }}.exe \
+            -I. \
+            -L./SteamAPI/win64 -lsteam_api \
+            -pthread
 
       # Upload build artifacts
       - name: Upload build
