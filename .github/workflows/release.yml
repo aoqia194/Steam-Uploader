@@ -32,7 +32,7 @@ jobs:
           g++ -g $(find ./src -name '*.cpp') \
             -o ./app-${{ matrix.os }}.exe \
             -I. \
-            -L./SteamAPI/win64 -lsteam_api \
+            -L./SteamAPI/win64 -lsteam_api64 \
             -pthread
 
       # Upload build artifacts
