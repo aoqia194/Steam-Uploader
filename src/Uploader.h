@@ -22,7 +22,8 @@ using std::string;
 using std::filesystem::exists;
 using std::filesystem::is_directory;
 using std::filesystem::is_regular_file;
-
+using std::filesystem::file_size;
+#include <vector>
 
 
 // main uploader class
@@ -34,13 +35,12 @@ public:
 
     // METHODS
     // main call
-    void UpdateItem(string description, string preview, string content, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath);
+    void UpdateItem(string description, string preview, string content, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath, string tags);
 
 
     bool UpdateAppID();
     bool InitSteamAPI();
     bool ShutdownSteamAPI();
-    void SetInformations(UGCUpdateHandle_t &updateHandle);
     bool CheckProgress(UGCUpdateHandle_t updateHandle, EItemUpdateStatus* previousUpdateStatus);
 
 private:
@@ -59,6 +59,7 @@ private:
     bool SetItemContent(UGCUpdateHandle_t handle, string pchContent);
     bool SetItemPreview(UGCUpdateHandle_t handle, string pchPreview);
     bool SetItemVisibility(UGCUpdateHandle_t handle, ERemoteStoragePublishedFileVisibility eVisibility);
+    bool SetTags(UGCUpdateHandle_t handle, const SteamParamStringArray_t* pchTags);
 
     // submit changes
     void SubmitItemUpdate(UGCUpdateHandle_t updateHandle, string pchContent);

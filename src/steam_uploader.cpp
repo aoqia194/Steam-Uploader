@@ -29,9 +29,10 @@ static struct option long_options[] = {
     {"title", required_argument, 0, 't'},
     {"visibility", required_argument, 0, 'v'},
     {"patchNote", required_argument, 0, 'P'},
+    {"tags", required_argument, 0, 'T'},
 
     // verbose
-    {"verbose", no_argument, 0, 'V'},
+    {"verbose", no_argument, 0, 'V'}, // does nothing for now
     {0, 0, 0, 0}
 };
 
@@ -52,10 +53,11 @@ int main(int argc, char *argv[])
     string title; // title of the item
     ERemoteStoragePublishedFileVisibility visibility = static_cast<ERemoteStoragePublishedFileVisibility>(-1); // nil value to detect unset visibility
     string patchNotePath = ""; // path to patch note
+    string tags = "$EMPTY"; // tags to add (not implemented yet)
 
     bool verbose = false;
 
-    while ((opt = getopt_long(argc, argv, "a:w:f:d:p:c:t:v:P:V:", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc, argv, "a:w:f:d:p:c:t:v:P:V:T:", long_options, &option_index)) != -1)
     {
         switch (opt)
         {
@@ -94,6 +96,9 @@ int main(int argc, char *argv[])
         case 'P': // patch note
             patchNotePath = string(optarg);
             break;
+        case 'T': // tags
+            tags = string(optarg);
+            break;
 
         // verbose
         case 'V':
@@ -121,13 +126,13 @@ int main(int argc, char *argv[])
         std::cout << "Automatically retrieved appID from workshopID: " << appID << "\n";
     }
 
-    if (descriptionPath.empty() && previewPath.empty() && contentPath.empty() && title.empty() && folder.empty()) {
+    if (descriptionPath.empty() && previewPath.empty() && contentPath.empty() && title.empty() && folder.empty() && visibility == static_cast<ERemoteStoragePublishedFileVisibility>(-1) && tags == "$EMPTY") {
         std::cerr << "Error: All parameters are empty. Nothing to upload.\n";
         return 1;
     }
 
     // upload item
     Uploader uploader(workshopID, appID);
-    uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, patchNotePath);
+    uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, patchNotePath, tags);
     return 0;
 }

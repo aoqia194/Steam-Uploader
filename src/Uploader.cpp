@@ -1,10 +1,31 @@
 #include "Uploader.h"
 
 
+// FIX: Using the helper function here causes a "Segmentation fault"
+SteamParamStringArray_t stringToSteamArray(const string& tags) {
+    // Split tags by comma
+    std::vector<std::string> tagList;
+    std::stringstream ss(tags);
+    std::string tag;
+    while (std::getline(ss, tag, ',')) {
+        // Trim whitespace before and after the tag (not in between)
+        tag.erase(0, tag.find_first_not_of(" \t\n\r"));
+        tag.erase(tag.find_last_not_of(" \t\n\r") + 1);
+        if (!tag.empty()) tagList.push_back(tag);
+    }
 
+    // Prepare array of C strings
+    std::vector<const char*> tagCStrs;
+    for (const auto& t : tagList) tagCStrs.push_back(t.c_str());
 
+    // transform to Steam string array
+    // https://partner.steamgames.com/doc/api/ISteamRemoteStorage#SteamParamStringArray_t
+    SteamParamStringArray_t tagArray;
+    tagArray.m_ppStrings = tagCStrs.data();
+    tagArray.m_nNumStrings = static_cast<int>(tagCStrs.size());
 
-
+    return tagArray;
+}
 
 
 // Uploader class implementation
@@ -17,7 +38,7 @@ Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID) {
 }
 
 // main function
-void Uploader::UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath) {
+void Uploader::UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath, string tags) {
     // update AppID and init Steam API
     if (!this->UpdateAppID() || !this->InitSteamAPI()) {
         return;
@@ -33,17 +54,29 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
             std::cerr << "Invalid description path: " << descriptionPath << ". Parameter must be a valid file.\n";
         } else {
             string description = readTxtFile(descriptionPath);
-            SetItemDescription(updateHandle, description.c_str());
+            // verify description size respects the limits
+            if (description.size() > k_cchPublishedDocumentDescriptionMax) {
+                std::cerr << "Error: Description exceeds maximum length of " << k_cchPublishedDocumentDescriptionMax << " characters. (Current: " << description.size() << ")\n";
+            } else {
+                bool success = SetItemDescription(updateHandle, description.c_str());
+                if (!success) {
+                    std::cerr << "Error: Failed to set item description.\n";
+                }
+            }
         }
     }
 
-    // TODO: verify preview respects the limitations
     // handle preview
     if (!previewPath.empty()) {
         if (!exists(previewPath) || !is_regular_file(previewPath)) {
-            std::cerr << "Invalid preview path: " << previewPath << ". Parameter must be a valid file.\n";
+            std::cerr << "Error: Invalid preview path (" << previewPath << "). Parameter must be a valid file.\n";
+        } else if (file_size(previewPath) > 1048576) {
+            std::cerr << "Error: Preview file is too large (" << file_size(previewPath) << " bytes). Maximum allowed is 1 MB.\n";
         } else {
-            SetItemPreview(updateHandle, previewPath.c_str());
+            bool success = SetItemPreview(updateHandle, previewPath.c_str());
+            if (!success) {
+                std::cerr << "Error: Failed to set item preview. Suggested formats include JPG, PNG and GIF.\n";
+            }
         }
     }
 
@@ -52,20 +85,57 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
         if (!exists(contentPath) || !is_directory(contentPath)) {
             std::cerr << "Invalid content path: " << contentPath << ". Parameter must be a valid folder.\n";
         } else {
-            SetItemContent(updateHandle, contentPath.c_str());
+            bool success = SetItemContent(updateHandle, contentPath.c_str());
+            if (!success) {
+                std::cerr << "Error: Failed to set item content.\n";
+            }
         }
     }
 
-    // TODO: verify title respects the limitations, if there is any ?
     // handle title
     if (!title.empty()) {
-        SetItemTitle(updateHandle, title.c_str());
+        if (title.size() > k_cchPublishedDocumentTitleMax) {
+            std::cerr << "Error: Title exceeds maximum length of " << k_cchPublishedDocumentTitleMax << " characters. (Current: " << title.size() << ")\n";
+        } else {
+            SetItemTitle(updateHandle, title.c_str());
+        }
     }
 
-    // TODO: verify the provided value is 0 to 3, other values might break ?
     // handle visibility
     if (visibility != static_cast<ERemoteStoragePublishedFileVisibility>(-1)) {
-        SetItemVisibility(updateHandle, visibility);
+        // verify the given visibility value is valid
+        if (visibility >= 0 && visibility <= 3) {
+            SetItemVisibility(updateHandle, visibility);
+        } else {
+            std::cerr << "Error: Invalid visibility value (" << visibility << "). Must be between 0 and 3.\n";
+        }
+    }
+    
+    // handle tags
+    if (tags != "$EMPTY") {
+        // inline stringToSteamArray due to a segmentation fault if it isn't
+        // Split tags by comma
+        std::vector<std::string> tagList;
+        std::stringstream ss(tags);
+        std::string tag;
+        while (std::getline(ss, tag, ',')) {
+            tag.erase(0, tag.find_first_not_of(" \t\n\r"));
+            tag.erase(tag.find_last_not_of(" \t\n\r") + 1);
+            if (!tag.empty()) tagList.push_back(tag);
+        }
+
+        // Prepare array of C strings
+        std::vector<const char*> tagCStrs;
+        for (const auto& t : tagList) tagCStrs.push_back(t.c_str());
+
+        SteamParamStringArray_t tagArray;
+        tagArray.m_ppStrings = tagCStrs.empty() ? nullptr : tagCStrs.data();
+        tagArray.m_nNumStrings = static_cast<int>(tagCStrs.size());
+
+        bool success = SetTags(updateHandle, &tagArray);
+        if (!success) {
+            std::cerr << "Error: Failed to set item tags.\n";
+        }
     }
 
 
@@ -79,6 +149,9 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
         }
     }
 
+
+
+    // push update
     SubmitItemUpdate(updateHandle, patchNote);
 
     // Use a default value that is not part of the enum by casting an invalid integer
@@ -159,25 +232,15 @@ bool Uploader::SetItemVisibility(UGCUpdateHandle_t handle, ERemoteStoragePublish
     return SteamUGC()->SetItemVisibility(handle, eVisibility);
 }
 
+bool Uploader::SetTags(UGCUpdateHandle_t handle, const SteamParamStringArray_t* pchTags) {
+    return SteamUGC()->SetItemTags(handle, pchTags);
+}
 
 // send the update
 void Uploader::SubmitItemUpdate(UGCUpdateHandle_t updateHandle, string pchContent) {
     // https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdate
     SteamAPICall_t apiCall = SteamUGC()->SubmitItemUpdate(updateHandle, pchContent.c_str());
     m_callResultSubmit.Set(apiCall, this, &Uploader::OnSubmitItemUpdateResult);
-}
-
-
-
-// setup various informations
-void Uploader::SetInformations(UGCUpdateHandle_t &updateHandle)
-{
-    // add configs for descriptions etc
-    SetItemTitle(updateHandle, "Uploader test 2");
-    SetItemDescription(updateHandle, "Test Description");
-    SetItemContent(updateHandle, "/home/simon/Documents/Repositories/Steam-Uploader/TestUpload");
-    SetItemPreview(updateHandle, "/home/simon/Documents/Repositories/Steam-Uploader/preview.png");
-    SetItemVisibility(updateHandle, k_ERemoteStoragePublishedFileVisibilityPublic);
 }
 
 // used to check the current upload status
@@ -190,7 +253,7 @@ bool Uploader::CheckProgress(UGCUpdateHandle_t updateHandle, EItemUpdateStatus* 
     bool isValid = eItemUpdateStatus != k_EItemUpdateStatusInvalid;
 
     if (isValid && eItemUpdateStatus != *previousUpdateStatus) {
-        std::cout << "Update status: " << GetEItemUpdateStatusDescription(eItemUpdateStatus) << " (" << GetEItemUpdateStatusName(eItemUpdateStatus) << ")\n";
+        std::cout << "Update status: " << GetEItemUpdateStatusDescription(eItemUpdateStatus) << "\n";
 
         *previousUpdateStatus = eItemUpdateStatus;
     }
