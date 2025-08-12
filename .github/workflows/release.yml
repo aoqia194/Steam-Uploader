@@ -35,6 +35,7 @@ jobs:
             -I. \
             -L./SteamAPI/win64 -lsteam_api64 \
             -Wl,-rpath,'$ORIGIN/SteamAPI/win64' \
+            -static-libgcc -static-libstdc++ -static \
             -pthread
         # Create zip using PowerShell
       - name: Zip Windows build
