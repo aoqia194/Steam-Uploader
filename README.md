@@ -5,6 +5,8 @@ Custom tool to update items on the Steam Workshop. Allows you to independently u
 To use the tool, make sure Steam is launched and use a command-line interpreter (CLI).
 1. Open the CLI in the folder. This can be done with two ways:
     - On Windows, in the file explorer top bar with the full path of the folder you're in, you can type `cmd` to open the CLI inside this folder.
+    - On Windows 11, in the file explorer, you can right click the background of a folder and select "Open in terminal"
+    - On Windows, you can open a terminal by searching for the application `cmd`.
     - Use the following command to go in the folder:
 ```bash
 cd path/to/app
