@@ -45,7 +45,7 @@ Below are optional parameters:
 | Patch note | <code>-P <span style="color:green">path</span></code> | <code>--patchNote <span style="color:green">path</span></code> | <span style="color:green">Path</span> to a text file which holds the patch note of the update. This is supposedly only needed if you upload new content. The patch note uses [BBCode](https://pzwiki.net/wiki/BBCode). |
 
 ## Examples
-For these examples, consider the Workshop ID `123456789`, a user name `user` on the computer and using the Project Zomboid's [mod structure](https://pzwiki.net/wiki/Mod_structure).
+For these examples, consider the Workshop ID `123456789`, a user name `user` on the computer and using the Project Zomboid's [mod structure](https://pzwiki.net/wiki/Mod_structure) (appID: 108600).
 
 ### Updating the content
 To update the content of your mod while on Windows:
