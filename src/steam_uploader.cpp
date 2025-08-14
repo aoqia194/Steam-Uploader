@@ -12,8 +12,9 @@ using std::string;
 // main app
 #include "Uploader.h"
 
-// Tries to implement this:
+// Implements this:
 // https://partner.steamgames.com/doc/features/workshop/implementation#uploading_a_workshop_item
+
 
 // list of available parameters
 static struct option long_options[] = {
@@ -21,6 +22,7 @@ static struct option long_options[] = {
     {"appID", required_argument, 0, 'a'},
     {"workshopID", required_argument, 0, 'w'},
     {"folder", required_argument, 0, 'f'},
+    {"new", no_argument, 0, 'n'},
 
     // parameters to upload
     {"description", required_argument, 0, 'd'},
@@ -36,6 +38,39 @@ static struct option long_options[] = {
     {0, 0, 0, 0}
 };
 
+// Helper to generate short options string from `long_options`.
+std::string get_short_options(const struct option* options) {
+    std::ostringstream oss;
+    for (int i = 0; options[i].name != nullptr; ++i) {
+        if (options[i].val == 0) continue; // skip if no short option
+        oss << static_cast<char>(options[i].val);
+        if (options[i].has_arg == required_argument)
+            oss << ":";
+        else if (options[i].has_arg == optional_argument)
+            oss << "::";
+    }
+    return oss.str();
+}
+
+// Helper to check if all upload parameters are empty/unset.
+bool allUploadParamsEmpty(
+    const std::string& descriptionPath,
+    const std::string& previewPath,
+    const std::string& contentPath,
+    const std::string& title,
+    const std::string& folder,
+    ERemoteStoragePublishedFileVisibility visibility,
+    const std::string& tags
+) {
+    return descriptionPath.empty() &&
+           previewPath.empty() &&
+           contentPath.empty() &&
+           title.empty() &&
+           folder.empty() &&
+           visibility == static_cast<ERemoteStoragePublishedFileVisibility>(-1) &&
+           tags == "$EMPTY";
+}
+
 int main(int argc, char *argv[])
 {
     // parse command line arguments
@@ -46,6 +81,7 @@ int main(int argc, char *argv[])
     AppId_t appID = 0;
     PublishedFileId_t workshopID = 0;
     string folder; // path to the folder
+    bool isNew = false;
 
     string descriptionPath; // path to description
     string previewPath; // path to preview image
@@ -57,7 +93,11 @@ int main(int argc, char *argv[])
 
     bool verbose = false;
 
-    while ((opt = getopt_long(argc, argv, "a:w:f:d:p:c:t:v:P:V:T:", long_options, &option_index)) != -1)
+    // retrieve short options
+    std::string short_options = get_short_options(long_options);
+
+    // parse command line arguments
+    while ((opt = getopt_long(argc, argv, short_options.c_str(), long_options, &option_index)) != -1)
     {
         switch (opt)
         {
@@ -76,6 +116,10 @@ int main(int argc, char *argv[])
             folder = string(optarg);
             break;
 
+        // call for a new workshop item creation
+        case 'n':
+            isNew = true;
+            break;
 
         // parameters
         case 'd': // description
@@ -112,27 +156,19 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (workshopID == 0) {
-        std::cerr << "Error: Provide a workshop ID.\n";
-        return 1;
-    }
-
-    if (appID == 0) {
-        appID = getAppID(workshopID);
-        if (appID == 0) {
-            std::cerr << "Error: Could not automatically retrieve appID from the workshop ID. Please provide it with --appID.\n";
-            return 1;
+    // verify at least one of these parameters is set
+    if (allUploadParamsEmpty(descriptionPath, previewPath, contentPath, title, folder, visibility, tags)) {
+        // acceptable behavior, creating an empty workshop item
+        if (isNew) {
+            Uploader uploader(workshopID, appID, isNew);
+            return 0;
         }
-        std::cout << "Automatically retrieved appID from workshopID: " << appID << "\n";
-    }
-
-    if (descriptionPath.empty() && previewPath.empty() && contentPath.empty() && title.empty() && folder.empty() && visibility == static_cast<ERemoteStoragePublishedFileVisibility>(-1) && tags == "$EMPTY") {
-        std::cerr << "Error: All parameters are empty. Nothing to upload.\n";
+        // improper behavior here however
+        std::cerr << "Error: All necessary parameters are empty. Nothing to upload.\n";
         return 1;
     }
 
     // upload item
-    Uploader uploader(workshopID, appID);
-    uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, patchNotePath, tags);
-    return 0;
+    Uploader uploader(workshopID, appID, isNew);
+    return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, patchNotePath, tags);
 }

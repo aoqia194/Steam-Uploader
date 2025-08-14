@@ -29,7 +29,7 @@ Below is the list of <span style="color: red">mandatory</span> arguments to pass
 | Name | Arg (long) | Arg (short) | Description |
 |--|--|--|--|
 | AppID | <code>-a <span style="color:#0074D9">appID</span></code> | <code>--appID <span style="color:#0074D9">appID</span></code> | The [App ID](https://pzwiki.net/wiki/App_ID) for your game. <BR><BR> If it is not provided, the code tries to retrieve automatically but the process can fail if the item was set to a visibility other than public. |
-| WorkshopID | <code>-w <span style="color:#0074D9">workshopID</span></code> | <code>--workshopID <span style="color:#0074D9">workshopID</span></code> | The [workshop ID](https://pzwiki.net/wiki/Workshop_ID) of your item. |
+| WorkshopID | <code>-w <span style="color:#0074D9">workshopID</span></code> | <code>--workshopID <span style="color:#0074D9">workshopID</span></code> | The [workshop ID](https://pzwiki.net/wiki/Workshop_ID) of your item. This parameter is overwritten by using `--new`. |
 
 Below is a list of arguments you can use to update specific elements of your workshop item. At least one needs to be used up to as many you want.
 | Name | Arg (long) | Arg (short) | Description |
@@ -40,6 +40,7 @@ Below is a list of arguments you can use to update specific elements of your wor
 | Title | <code>-t <span style="color:red">title</span></code> | <code>--title <span style="color:red">title</span></code> | <span style="color:red">Title</span> of workshop item. |
 | Visibility | <code>-v <span style="color:red">int</span></code> | <code>--visibility <span style="color:red">int</span></code> | Visibility of the item on the workshop: <ul> <li><code><span style="color:red">0</span></code> for public visibility (default),</li> <li><code><span style="color:red">1</span></code> for friends-only visibility,</li> <li><code><span style="color:red">2</span></code> for private (hidden) visibility.</li> <li><code><span style="color:red">3</span></code> for unlisted visibility.</li> </ul> |
 | Tags | <code>-T <span style="color:red">tag1,tag2,...,tagN</span></code> | <code>--tags <span style="color:red">tag1,tag2,...,tagN</span></code> | Used to set the <span style="color:red">tags</span> of the Workshop item. These are predefined by the developers of the game and thus only those should be used. You can find the list of tags in the main Workshop page of the game on the right under "Browse By Tags". Tags need to be separated by `,`. <BR><BR> This list can also be empty by doing `--tags ""` which will remove every tags. |
+| New workshop item | <code>-n</code> | <code>-new</code> | Creates a <span style="color:red">new</span> Workshop item and thus a new Workshop ID which will be used to update the other fields (description, preview etc). <BR><BR> This parameter can be called alone which will create an empty Workshop item without anything on the Workshop page |
 
 Below are optional parameters:
 | Name | Arg (long) | Arg (short) | Description |

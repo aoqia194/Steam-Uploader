@@ -1,53 +1,76 @@
 #include "Uploader.h"
 
 
-// FIX: Using the helper function here causes a "Segmentation fault"
-SteamParamStringArray_t stringToSteamArray(const string& tags) {
-    // Split tags by comma
-    std::vector<std::string> tagList;
-    std::stringstream ss(tags);
-    std::string tag;
-    while (std::getline(ss, tag, ',')) {
-        // Trim whitespace before and after the tag (not in between)
-        tag.erase(0, tag.find_first_not_of(" \t\n\r"));
-        tag.erase(tag.find_last_not_of(" \t\n\r") + 1);
-        if (!tag.empty()) tagList.push_back(tag);
-    }
-
-    // Prepare array of C strings
-    std::vector<const char*> tagCStrs;
-    for (const auto& t : tagList) tagCStrs.push_back(t.c_str());
-
-    // transform to Steam string array
-    // https://partner.steamgames.com/doc/api/ISteamRemoteStorage#SteamParamStringArray_t
-    SteamParamStringArray_t tagArray;
-    tagArray.m_ppStrings = tagCStrs.data();
-    tagArray.m_nNumStrings = static_cast<int>(tagCStrs.size());
-
-    return tagArray;
-}
-
-
 // Uploader class implementation
 
 // init
-Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID) {
-    this->m_workshopID = workshopID;
-    // AppId_t appID = getAppID(workshopID);
-    this->m_appID = appID;
-}
-
-// main function
-void Uploader::UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath, string tags) {
-    // update AppID and init Steam API
-    if (!this->UpdateAppID() || !this->InitSteamAPI()) {
+Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID, bool isNew) {
+    // an appID needs to be provided, it's a mandatory parameter
+    if (appID == 0) {
+        std::cerr << "Error: Provide the appID.\n";
         return;
     }
 
+    // set app ID
+    this->m_appID = appID;
+    setAppID(appID); // set in the file
+
+    // init Steam API
+    InitSteamAPI();
+
+    // create new item if needed
+    if (isNew) {
+        // catch user possibly doing wrong usage if they gave a wID and try to create a new item
+        if (workshopID != 0) {
+            std::cerr << "Warning: You provided a workshopID (" << workshopID << ") while creating a new item but this ID will be ignored since a new one is created instead.\n";
+        }
+
+        this->m_workshopID = 0; // default value used when creating the item
+        CreateWorkshopItem(); // this will set workshopID to the newly created item workshopID
+
+    // workshopID can't be 0 if no new item is being created
+    } else if (workshopID == 0) {
+        std::cerr << "Error: Provide the workshopID.\n";
+        ShutdownSteamAPI();
+        return;
+
+    } else {
+        this->m_workshopID = workshopID;
+    }
+
+    // for use when setting everything up
+    this->m_isNew = isNew;
+}
+
+// initialize Steam API
+bool Uploader::InitSteamAPI() {
+    bool success = SteamAPI_Init();
+    if (!success) {
+        std::cerr << "Failed to initialize Steam API from appID " << this->m_appID << "!\n";
+        return success;
+    }
+
+    std::cout << "Steam API initialized from appID " << this->m_appID << ".\n";
+    // EnableWarningMessageHook();
+    return success;
+}
+
+// shutdown Steam API
+bool Uploader::ShutdownSteamAPI() {
+    SteamAPI_Shutdown();
+    std::cout << "Steam API shutdown.\n";
+    return true;
+}
+
+
+
+
+
+// main function
+int Uploader::UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath, string tags) {
     // create handle
     UGCUpdateHandle_t updateHandle = CreateUpdateHandle(this->m_workshopID);
 
-    // TODO: verify that the provided description respects the limitations. See doc on the Steam API function to set the description for a handle which gives the value to check.
     // handle description
     if (!descriptionPath.empty()) {
         if (!exists(descriptionPath)) {
@@ -154,7 +177,7 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
     // push update
     SubmitItemUpdate(updateHandle, patchNote);
 
-    // Use a default value that is not part of the enum by casting an invalid integer
+    // default enum value
     EItemUpdateStatus previousUpdateStatus = k_EItemUpdateStatusInvalid;
     while (true) {
         bool isValid = CheckProgress(updateHandle, &previousUpdateStatus);
@@ -167,40 +190,11 @@ void Uploader::UpdateItem(string descriptionPath, string previewPath, string con
     }
 
     ShutdownSteamAPI();
+
+    return 0;
 }
 
-// update AppID by verifying if it's good first
-bool Uploader::UpdateAppID() {
-    AppId_t appID = this->m_appID;
-    if (appID == 0) {
-        std::cerr << "Failed to retrieve appID for workshop item: " << this->m_workshopID << "\n";
-        return false;
-    }
 
-    // set appID needed for Steam API initialization
-    setAppID(appID);
-    return true;
-}
-
-// initialize Steam API
-bool Uploader::InitSteamAPI() {
-    bool success = SteamAPI_Init();
-    if (!success) {
-        std::cerr << "Failed to initialize Steam API for workshopID " << this->m_workshopID << " from appID " << this->m_appID << "!\n";
-        return success;
-    }
-
-    std::cout << "Steam API initialized for workshopID " << this->m_workshopID << " from appID " << this->m_appID << "!\n";
-    // EnableWarningMessageHook();
-    return success;
-}
-
-// shutdown Steam API
-bool Uploader::ShutdownSteamAPI() {
-    SteamAPI_Shutdown();
-    std::cout << "Steam API shutdown.\n";
-    return true;
-}
 
 
 
@@ -236,6 +230,7 @@ bool Uploader::SetTags(UGCUpdateHandle_t handle, const SteamParamStringArray_t* 
     return SteamUGC()->SetItemTags(handle, pchTags);
 }
 
+
 // send the update
 void Uploader::SubmitItemUpdate(UGCUpdateHandle_t updateHandle, string pchContent) {
     // https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdate
@@ -262,6 +257,29 @@ bool Uploader::CheckProgress(UGCUpdateHandle_t updateHandle, EItemUpdateStatus* 
 }
 
 
+// create new workshop item
+void Uploader::CreateWorkshopItem() {
+    // https://partner.steamgames.com/doc/api/ISteamUGC#CreateItem
+    // k_EWorkshopFileTypeCommunity can be swapped out to other existing options:
+    // https://partner.steamgames.com/doc/api/ISteamRemoteStorage#EWorkshopFileType
+    SteamAPICall_t apiCall = SteamUGC()->CreateItem(SteamUtils()->GetAppID(), k_EWorkshopFileTypeCommunity);
+    m_callResultCreate.Set(apiCall, this, &Uploader::OnCreateWorkshopItemResult);
+
+    // TODO: add a timeout limit or an indicator for the user that the item is being created and awaiting Steam's response
+    std::cout << "Creating new workshop item...\n";
+    while (true) {
+        SteamAPI_RunCallbacks();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                
+        // stop when the new workshop ID got set
+        if (this->m_workshopID != 0) {
+            break;
+        }
+    }
+
+    return;
+}
+
 
 // callback for submit
 void Uploader::OnSubmitItemUpdateResult(SubmitItemUpdateResult_t* eResult, bool needUserAgreement)
@@ -272,6 +290,22 @@ void Uploader::OnSubmitItemUpdateResult(SubmitItemUpdateResult_t* eResult, bool 
     }
     if (eResult->m_eResult == k_EResultOK) {
         std::cout << "Item update submitted successfully!\n";
+    } else {
+        // Enum doc: https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdateResult_t
+        std::cerr << "Failed to submit item update. (" << GetEResultName(eResult->m_eResult) << ": " << GetEResultDescription(eResult->m_eResult) << ")\n";
+    };
+}
+
+// callback for new workshop item
+void Uploader::OnCreateWorkshopItemResult(CreateItemResult_t* eResult, bool needUserAgreement)
+{
+    if (needUserAgreement) {
+        std::cerr << "User needs to accept the workshop legal agreement before submitting the item update.\n";
+        return;
+    }
+    if (eResult->m_eResult == k_EResultOK) {
+        std::cout << "Item created successfully at workshop " << eResult->m_nPublishedFileId << "!\n";
+        this->m_workshopID = eResult->m_nPublishedFileId; // update workshop ID
     } else {
         // Enum doc: https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdateResult_t
         std::cerr << "Failed to submit item update. (" << GetEResultName(eResult->m_eResult) << ": " << GetEResultDescription(eResult->m_eResult) << ")\n";
