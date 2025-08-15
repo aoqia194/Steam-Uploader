@@ -8,6 +8,7 @@
 // #include "Util/WarningHook.h"
 #include "Util/ReadFile.h"
 #include "Util/AppID.h"
+#include "Util/HasLanguage.h"
 
 // enums
 #include "Enum/EResult.h"
@@ -35,7 +36,12 @@ public:
 
     // METHODS
     // main call
-    int UpdateItem(string description, string preview, string content, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath, string tags);
+    int UpdateItem(
+        // at least one of
+        string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string tags, 
+        // optional
+        string patchNotePath, string language
+    );
 
     bool InitSteamAPI();
     bool ShutdownSteamAPI();
@@ -62,6 +68,8 @@ private:
     bool SetItemPreview(UGCUpdateHandle_t handle, string pchPreview);
     bool SetItemVisibility(UGCUpdateHandle_t handle, ERemoteStoragePublishedFileVisibility eVisibility);
     bool SetTags(UGCUpdateHandle_t handle, const SteamParamStringArray_t* pchTags);
+
+    bool SetUploadLanguage(UGCUpdateHandle_t handle, string language);
 
     // Submit the item update with the patch note `pchContent`.
     void SubmitItemUpdate(UGCUpdateHandle_t updateHandle, string pchContent);

@@ -46,6 +46,7 @@ Below are optional parameters:
 | Name | Arg (long) | Arg (short) | Description |
 |--|--|--|--|
 | Patch note | <code>-P <span style="color:green">path</span></code> | <code>--patchNote <span style="color:green">path</span></code> | <span style="color:green">Path</span> to a text file which holds the patch note of the update. This is supposedly only needed if you upload new content. The patch note uses [BBCode](https://pzwiki.net/wiki/BBCode). |
+| Language | <code>-L <span style="color:green">languageCode</span></code> | <code>--language <span style="color:green">languageCode</span></code> | Specify the targeted language for the description and title of this specific upload by indicating the [API language code](https://partner.steamgames.com/doc/store/localization/languages). By default uses <code><span style="color:green">english</span></code>. <BR><BR> Steam is able to render a different description and title based on the user's Steam app language, giving the modders the ability to provide a translated translation for multiple language. |
 
 ## Examples
 For these examples, consider the Workshop ID `123456789`, a user name `user` on the computer and using the Project Zomboid's [mod structure](https://pzwiki.net/wiki/Mod_structure) (appID: 108600).

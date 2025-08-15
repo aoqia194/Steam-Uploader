@@ -30,8 +30,11 @@ static struct option long_options[] = {
     {"content", required_argument, 0, 'c'},
     {"title", required_argument, 0, 't'},
     {"visibility", required_argument, 0, 'v'},
-    {"patchNote", required_argument, 0, 'P'},
     {"tags", required_argument, 0, 'T'},
+
+    // optional
+    {"patchNote", required_argument, 0, 'P'},
+    {"language", required_argument, 0, 'L'},
 
     // verbose
     {"verbose", no_argument, 0, 'V'}, // does nothing for now
@@ -88,8 +91,10 @@ int main(int argc, char *argv[])
     string contentPath; // path to content folder
     string title; // title of the item
     ERemoteStoragePublishedFileVisibility visibility = static_cast<ERemoteStoragePublishedFileVisibility>(-1); // nil value to detect unset visibility
-    string patchNotePath = ""; // path to patch note
     string tags = "$EMPTY"; // tags to add (not implemented yet)
+
+    string patchNotePath = ""; // path to patch note
+    string language = "english"; // default language on Steam's side
 
     bool verbose = false;
 
@@ -137,11 +142,16 @@ int main(int argc, char *argv[])
         case 'v':
             visibility = static_cast<ERemoteStoragePublishedFileVisibility>(std::stoi(optarg));
             break;
+        case 'T': // tags
+            tags = string(optarg);
+            break;
+
+        // optional
         case 'P': // patch note
             patchNotePath = string(optarg);
             break;
-        case 'T': // tags
-            tags = string(optarg);
+        case 'L': // language
+            language = string(optarg);
             break;
 
         // verbose
@@ -170,5 +180,10 @@ int main(int argc, char *argv[])
 
     // upload item
     Uploader uploader(workshopID, appID, isNew);
-    return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, patchNotePath, tags);
+    return uploader.UpdateItem(
+        // at least one of
+        descriptionPath, previewPath, contentPath, title, visibility, tags, 
+        // optional
+        patchNotePath, language
+    );
 }

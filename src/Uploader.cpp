@@ -67,7 +67,12 @@ bool Uploader::ShutdownSteamAPI() {
 
 
 // main function
-int Uploader::UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string patchNotePath, string tags) {
+int Uploader::UpdateItem(
+        // at least one of
+        string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string tags, 
+        // optional
+        string patchNotePath, string language
+    ) {
     // create handle
     UGCUpdateHandle_t updateHandle = CreateUpdateHandle(this->m_workshopID);
 
@@ -120,7 +125,10 @@ int Uploader::UpdateItem(string descriptionPath, string previewPath, string cont
         if (title.size() > k_cchPublishedDocumentTitleMax) {
             std::cerr << "Error: Title exceeds maximum length of " << k_cchPublishedDocumentTitleMax << " characters. (Current: " << title.size() << ")\n";
         } else {
-            SetItemTitle(updateHandle, title.c_str());
+            bool success = SetItemTitle(updateHandle, title.c_str());
+            if (!success) {
+                std::cerr << "Error: Failed to set item title. (" << title << ")\n";
+            }
         }
     }
 
@@ -128,7 +136,10 @@ int Uploader::UpdateItem(string descriptionPath, string previewPath, string cont
     if (visibility != static_cast<ERemoteStoragePublishedFileVisibility>(-1)) {
         // verify the given visibility value is valid
         if (visibility >= 0 && visibility <= 3) {
-            SetItemVisibility(updateHandle, visibility);
+            bool success = SetItemVisibility(updateHandle, visibility);
+            if (!success) {
+                std::cerr << "Error: Failed to set item visibility. (" << visibility << ")\n";
+            }
         } else {
             std::cerr << "Error: Invalid visibility value (" << visibility << "). Must be between 0 and 3.\n";
         }
@@ -157,10 +168,24 @@ int Uploader::UpdateItem(string descriptionPath, string previewPath, string cont
 
         bool success = SetTags(updateHandle, &tagArray);
         if (!success) {
-            std::cerr << "Error: Failed to set item tags.\n";
+            std::cerr << "Error: Failed to set item tags. (" << tags << ")\n";
         }
     }
 
+
+
+    // handle language
+    if (language != "english") {
+        // verify it's a valid language for Steam
+        if (!IsValidSteamLanguageCode(language)) {
+            std::cerr << "Error: Invalid language code. (" << language << ")\n";
+        } else {
+            bool success = SetUploadLanguage(updateHandle, language);
+            if (!success) {
+                std::cerr << "Error: Failed to set upload language. ("<< language << ")\n";
+            }
+        }
+    }
 
     // handle patch note
     string patchNote = ""; // default
@@ -230,6 +255,9 @@ bool Uploader::SetTags(UGCUpdateHandle_t handle, const SteamParamStringArray_t* 
     return SteamUGC()->SetItemTags(handle, pchTags);
 }
 
+bool Uploader::SetUploadLanguage(UGCUpdateHandle_t handle, string language) {
+    return SteamUGC()->SetItemUpdateLanguage(handle, language.c_str());
+}
 
 // send the update
 void Uploader::SubmitItemUpdate(UGCUpdateHandle_t updateHandle, string pchContent) {
