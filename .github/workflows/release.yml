@@ -47,6 +47,8 @@ jobs:
           if [ ! -f ./include/nlohmann/json.hpp ]; then
             curl -L -o ./include/nlohmann/json.hpp https://raw.githubusercontent.com/nlohmann/json/develop/single_include/nlohmann/json.hpp
           fi
+          # Ensure libcurl.a exists for MinGW linker
+          cp ./curl/lib/libcurl.dll.a ./curl/lib/libcurl.a
           g++ -g $(find ./src -name '*.cpp') \
             -o ./app-${{ matrix.os }}.exe \
             -I. -I./include -I./curl/include \
