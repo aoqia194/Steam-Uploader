@@ -61,7 +61,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI/win64/steam_api64.dll, libcurl-x64.dll -DestinationPath app-${{ matrix.os }}.zip
+          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI/win64/steam_api64.dll, libcurl-x64.dll, cacert.pem -DestinationPath app-${{ matrix.os }}.zip
 
       # Upload build artifacts
       - name: Upload build
