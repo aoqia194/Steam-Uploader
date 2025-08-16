@@ -12,8 +12,8 @@ TARGET = ./app
 all: $(TARGET)
 
 $(TARGET): $(SRCS)
-    $(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET) $(LDFLAGS)
 
 # Clean up compiled files
 clean:
-    rm -f $(TARGET)
+	rm -f $(TARGET)
