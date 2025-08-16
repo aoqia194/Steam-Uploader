@@ -68,7 +68,6 @@ void perform_update() {
     }
     // Parse JSON to find the correct asset
     std::string zip_url;
-    std::string zip_url;
     try {
         auto json = nlohmann::json::parse(json_data);
         for (const auto& asset : json["assets"]) {
