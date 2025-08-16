@@ -48,11 +48,11 @@ jobs:
           fi
           g++ -g $(find ./src -name '*.cpp') \
             -o ./app-${{ matrix.os }}.exe \
-            -I. -I./include \
-            -L./SteamAPI/win64 -lsteam_api64 \
+            -I. -I./include -I./curl/include \
+            -L./SteamAPI/win64 -L./curl/lib -lsteam_api64 -lcurl \
             -Wl,-rpath,'$ORIGIN/SteamAPI/win64' \
             -static-libgcc -static-libstdc++ -static \
-            -pthread -lcurl
+            -pthread
         # Create zip using PowerShell
       - name: Zip Windows build
         if: matrix.os == 'windows-latest'
