@@ -25,6 +25,17 @@ jobs:
           mv ./app ./app-${{ matrix.os }}
           zip -r app-${{ matrix.os }}.zip app-${{ matrix.os }} SteamAPI/linux64/libsteam_api.so
 
+      # Windows: Download and extract curl development files
+      - name: Download curl for Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          curl -LO https://curl.se/windows/dl-8.8.0_2/curl-8.8.0_2-win64-mingw.zip
+          unzip curl-8.8.0_2-win64-mingw.zip -d curl-win
+          # Copy include and lib to expected locations
+          mkdir -p ./curl/include ./curl/lib
+          cp -r curl-win/curl-8.8.0_2-win64-mingw/include/curl ./curl/include/
+          cp curl-win/curl-8.8.0_2-win64-mingw/lib/libcurl.a ./curl/lib/
       # Windows build
       - name: Build on Windows
         if: matrix.os == 'windows-latest'
