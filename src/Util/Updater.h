@@ -93,12 +93,13 @@ void perform_update() {
     std::cout << "Downloading: " << zip_url << std::endl;
 #if defined(_WIN32)
     std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str());
-    // Extract the ZIP file (assumes PowerShell is available)
-    std::system("powershell -Command \"Expand-Archive -Force update.zip .\"");
-    // Replace the binary and DLL
-    std::system(("move /Y \"" + exe_name + "\" \"" + exe_target + "\"").c_str());
-    std::system(("move /Y \"" + dll_name + "\" \"" + dll_target + "\"").c_str());
+    // Extract to a temp folder
+    std::system("powershell -Command \"Expand-Archive -Force update.zip temp-update\"");
+    // Move new files into place
+    std::system(("move /Y \"temp-update\\" + exe_name + "\" \"" + exe_target + "\"").c_str());
+    std::system(("move /Y \"temp-update\\" + dll_name + "\" \"" + dll_target + "\"").c_str());
     // Clean up
+    std::system("rmdir /S /Q temp-update");
     std::system("del update.zip");
 #else
     std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str());
