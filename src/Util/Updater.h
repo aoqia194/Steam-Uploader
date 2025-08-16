@@ -44,7 +44,7 @@ void perform_update() {
 #else
     const std::string asset_name = "app-ubuntu-latest.zip";
     const std::string exe_name = "app-ubuntu-latest";
-    const std::string exe_target = "app";
+    const std::string exe_target = "app-ubuntu-latest";
     const std::string so_name = "SteamAPI/linux64/libsteam_api.so";
     const std::string so_target = "SteamAPI/linux64/libsteam_api.so";
 #endif
@@ -59,11 +59,15 @@ void perform_update() {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "Steam-Uploader");
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &json_data);
-            curl_easy_perform(curl);
+            CURLcode res = curl_easy_perform(curl);
+            if (res != CURLE_OK) {
+                std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+            }
             curl_easy_cleanup(curl);
         }
     }
     // Parse JSON to find the correct asset
+    std::string zip_url;
     std::string zip_url;
     try {
         auto json = nlohmann::json::parse(json_data);
@@ -76,6 +80,7 @@ void perform_update() {
         }
     } catch (...) {
         std::cerr << "Failed to parse release info." << std::endl;
+        std::cerr << "Raw JSON data: " << json_data << std::endl; // <--- Add this line
         return;
     }
     if (zip_url.empty()) {
