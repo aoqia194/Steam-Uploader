@@ -93,14 +93,23 @@ void perform_update() {
     std::cout << "Downloading: " << zip_url << std::endl;
 #if defined(_WIN32)
     std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str());
-    // Extract to a temp folder
     std::system("powershell -Command \"Expand-Archive -Force update.zip temp-update\"");
-    // Move new files into place
-    std::system(("move /Y \"temp-update\\" + exe_name + "\" \"" + exe_target + "\"").c_str());
-    std::system(("move /Y \"temp-update\\" + dll_name + "\" \"" + dll_target + "\"").c_str());
-    // Clean up
-    std::system("rmdir /S /Q temp-update");
-    std::system("del update.zip");
+    // Write a batch file to do the update after this process exits
+    std::ofstream updater("run_update.bat");
+    updater << "@echo off\n";
+    updater << "echo Waiting for Steam-Uploader to exit...\n";
+    updater << ":loop\n";
+    updater << "tasklist | findstr /I \"app-windows-latest.exe\" >nul && (timeout /t 1 >nul & goto loop)\n";
+    updater << "move /Y temp-update\\app-windows-latest.exe app-windows-latest.exe\n";
+    updater << "move /Y temp-update\\steam_api64.dll steam_api64.dll\n";
+    updater << "rmdir /S /Q temp-update\n";
+    updater << "del update.zip\n";
+    updater << "start \"\" app-windows-latest.exe\n";
+    updater << "del \"%~f0\"\n"; // Deletes itself
+    updater.close();
+    // Launch the updater and exit
+    std::system("start run_update.bat");
+    exit(0);
 #else
     std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str());
     std::system("unzip -o update.zip");
