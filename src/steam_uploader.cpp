@@ -8,13 +8,19 @@ using std::string;
 
 // random tools
 #include "Util/AppID.h"
+#include "Util/Updater.h"
 
 // main app
 #include "Uploader.h"
 
 // Implements this:
 // https://partner.steamgames.com/doc/features/workshop/implementation#uploading_a_workshop_item
-
+#define UPLOADER_VERSION "v0.5.0" // current app version
+#ifdef _WIN32
+#define OS_NAME "windows-latest"
+#else
+#define OS_NAME "ubuntu-latest"
+#endif
 
 // list of available parameters
 static struct option long_options[] = {
@@ -38,6 +44,7 @@ static struct option long_options[] = {
 
     // verbose
     {"verbose", no_argument, 0, 'V'}, // does nothing for now
+    {"update", no_argument, 0, 'U'}, // update app
     {0, 0, 0, 0}
 };
 
@@ -97,6 +104,9 @@ int main(int argc, char *argv[])
     string language = "english"; // default language on Steam's side
 
     bool verbose = false;
+
+    bool check_update = false;
+    bool do_update = false;
 
     // retrieve short options
     std::string short_options = get_short_options(long_options);
@@ -159,11 +169,27 @@ int main(int argc, char *argv[])
             verbose = true;
             break;
 
+        case 'U': // update
+            do_update = true;
+            break;
+
         // wrong argument passed down
         default:
             std::cerr << "Wrong usage: " << argv[0] << " see doc.\n";
             return 1;
         }
+    }
+
+    // Check for updates on every run
+    std::string latest_version = fetch_latest_version();
+    if (!latest_version.empty() && latest_version != UPLOADER_VERSION) {
+        std::cout << "A new version (" << latest_version << ") is available! ";
+        std::cout << "Run with --update or -U to update.\n";
+    }
+
+    if (do_update) {
+        perform_update();
+        return 0;
     }
 
     // verify at least one of these parameters is set
