@@ -35,7 +35,8 @@ jobs:
           # Copy include and lib to expected locations
           mkdir -p ./curl/include ./curl/lib
           cp -r curl-win/curl-8.8.0_2-win64-mingw/include/curl ./curl/include/
-          cp curl-win/curl-8.8.0_2-win64-mingw/lib/libcurl.a ./curl/lib/
+          cp curl-win/curl-8.8.0_2-win64-mingw/lib/libcurl.dll.a ./curl/lib/
+          cp curl-win/curl-8.8.0_2-win64-mingw/bin/libcurl-4.dll ./  # Copy DLL to project root for runtime
       # Windows build
       - name: Build on Windows
         if: matrix.os == 'windows-latest'
@@ -58,7 +59,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI/win64/steam_api64.dll -DestinationPath app-${{ matrix.os }}.zip
+          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI/win64/steam_api64.dll, libcurl-4.dll -DestinationPath app-${{ matrix.os }}.zip
 
       # Upload build artifacts
       - name: Upload build
