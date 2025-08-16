@@ -39,8 +39,8 @@ void perform_update() {
     const std::string asset_name = "app-windows-latest.zip";
     const std::string exe_name = "app-windows-latest.exe";
     const std::string exe_target = "app-windows-latest.exe";
-    const std::string dll_name = "SteamAPI/win64/steam_api64.dll";
-    const std::string dll_target = "SteamAPI/win64/steam_api64.dll";
+    const std::string dll_name = "steam_api64.dll";
+    const std::string dll_target = "steam_api64.dll";
 #else
     const std::string asset_name = "app-ubuntu-latest.zip";
     const std::string exe_name = "app-ubuntu-latest";
