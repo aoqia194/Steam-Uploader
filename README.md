@@ -1,6 +1,18 @@
 # Steam Uploader (WIP)
 Custom tool to update items on the Steam Workshop. Allows you to independently update specific elements like the item title, its content, the preview etc.
 
+## Building with CMake
+
+Building should be done with gcc/clang++/etc.
+Use Mingw64 on Windows. **AVOID MSVC as it is not supported**.
+
+Building in release mode:
+
+```sh
+cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
 ## Uploading
 To use the tool, make sure Steam is launched and use a command-line interpreter (CLI).
 1. Open the CLI in the folder. This can be done with two ways:
