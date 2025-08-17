@@ -5,6 +5,7 @@
 
 !/.github
 !/cmake
+!/cmake/cpm
 !/include
 !/lib
 !/src
@@ -12,6 +13,5 @@
 !/.clang-format
 !/.clang-tidy
 !/.gitignore
-!/cacert.pem
 !/CMakeLists.txt
 !/Enums.ods

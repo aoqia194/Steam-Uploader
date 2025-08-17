@@ -9,6 +9,9 @@
 
 #include "spdlog/spdlog.h"
 
+#include <algorithm>
+#include <iterator>
+
 // Uploader class implementation
 
 Uploader::Uploader(PublishedFileId_t workshopID, const AppId_t appID, const bool createNewUgc)
@@ -54,7 +57,7 @@ Uploader::Uploader(PublishedFileId_t workshopID, const AppId_t appID, const bool
 // initialize Steam API
 bool Uploader::InitSteamAPI()
 {
-    bool success = SteamAPI_Init();
+    const bool success = SteamAPI_Init();
     if (!success) {
         spdlog::error("Failed to initialize Steam API from appID ({})", this->m_appID);
         return success;
@@ -76,108 +79,21 @@ bool Uploader::ShutdownSteamAPI()
 // TODO: Should probably split this up into multiple subfunctions, this function is massive!
 int Uploader::UpdateItem(std::optional<fs::path> descriptionPath,
     std::optional<fs::path> previewPath, std::optional<fs::path> contentPath,
-    std::optional<std::string> title,
-    std::optional<ERemoteStoragePublishedFileVisibility> visibility,
+    std::optional<std::string> title, std::optional<int8_t> visibility,
     std::optional<std::vector<std::string>> tags, std::optional<fs::path> patchNotePath,
     std::optional<std::string> language)
 {
     UGCUpdateHandle_t updateHandle = CreateUpdateHandle(this->m_workshopID);
 
-    // Description
-    if (descriptionPath.has_value()) {
-        const auto pathStr = descriptionPath->string();
-
-        if (!fs::exists(pathStr)) {
-            spdlog::error("Description file ({}) doesn't exist!", pathStr);
-        } else {
-            const auto description = readTxtFile(pathStr);
-            if (description.size() > k_cchPublishedDocumentDescriptionMax) {
-                spdlog::error("Description with length {} exceeds maximum length of {} characters.",
-                    description.size(), k_cchPublishedDocumentDescriptionMax);
-            } else if (const auto ret = SetItemDescription(updateHandle, pathStr); !ret) {
-                spdlog::error("Failed to set item description with status {}", ret);
-            }
-        }
-    }
-
-    // Preview
-    if (previewPath.has_value()) {
-        const auto pathStr = previewPath->string();
-
-        if (!fs::exists(*previewPath) || !fs::is_regular_file(*previewPath)) {
-            spdlog::warn("Preview file ({}) doesn't exist!", pathStr);
-        } else if (const auto previewSize = fs::file_size(*previewPath) >= 1048576) {
-            spdlog::warn("Preview file with size {} exceeds maximum size of 1048576 bytes.",
-                previewSize);
-        } else if (const auto ret = SetItemPreview(updateHandle, pathStr); !ret) {
-            spdlog::error("Failed to set workshop item preview with status {}", ret);
-        }
-    }
-
-    // Content
-    if (contentPath.has_value()) {
-        const auto pathStr = contentPath->string();
-
-        if (!fs::exists(*contentPath) || !fs::is_directory(*contentPath)) {
-            spdlog::error("Content directory ({}) doesn't exist!", pathStr);
-        } else if (const auto ret = SetItemContent(updateHandle, pathStr.c_str()); !ret) {
-            spdlog::error("Failed to set item content with status {}", ret);
-        }
-    }
-
-    // Title
-    if (title.has_value()) {
-        if (title->size() > k_cchPublishedDocumentTitleMax) {
-            spdlog::error("Title with length {} exceeds maximum length of {} characters.",
-                k_cchPublishedDocumentTitleMax, title->size());
-        } else if (const auto ret = SetItemTitle(updateHandle, *title); !ret) {
-            spdlog::error("Failed to set item title to ({})", *title);
-        }
-    }
-
-    // Visibility
-    if (const auto visibilityIdx = static_cast<int8_t>(*visibility); visibilityIdx != -1) {
-        if (visibility >= k_ERemoteStoragePublishedFileVisibilityPublic &&
-            visibility <= k_ERemoteStoragePublishedFileVisibilityUnlisted)
-        {
-            if (!SetItemVisibility(updateHandle, *visibility)) {
-                spdlog::error("Failed to set item visibility to ({})", visibilityIdx);
-            }
-        } else {
-            spdlog::error("Invalid visibility with value ({}). Must be between 0 and 3!",
-                visibilityIdx);
-        }
-    }
-
-    // Tags
-    if (tags.has_value()) {
-        // Modify tags in-place. They are copied into the function, so it's ok.
-        std::vector<const char *> tagsCstr{};
-        tagsCstr.resize(tags->size());
-        std::ranges::transform(tags->cbegin(), tags->cend(), tagsCstr.begin(), &std::string::c_str);
-
-        SteamParamStringArray_t tagArray{};
-        tagArray.m_ppStrings = tagsCstr.empty() ? nullptr : tagsCstr.data();
-        tagArray.m_nNumStrings = static_cast<int32_t>(tags->size());
-
-        if (!SetTags(updateHandle, &tagArray)) {
-            std::ostringstream os;
-            std::ranges::copy(*tags, std::ostream_iterator<std::string>(os, ","));
-            spdlog::error("Failed to set item tags to {}", os.str());
-        }
-    }
-
-    // Language
-    if (language.has_value() && *language != "english") {
-        if (!IsValidSteamLanguageCode(*language)) {
-            spdlog::error("Invalid language code {}", *language);
-        } else if (!SetUploadLanguage(updateHandle, *language)) {
-            spdlog::error("Failed to set upload language to {}", *language);
-        }
-    }
+    SetItemDescription(updateHandle, descriptionPath);
+    SetItemPreview(updateHandle, previewPath);
+    SetItemContent(updateHandle, contentPath);
+    SetItemTitle(updateHandle, title);
+    SetItemVisibility(updateHandle, visibility);
+    SetTags(updateHandle, tags);
+    SetUploadLanguage(updateHandle, language);
 
     // Patch notes
-    // TODO: Maybe a SetPatchNote function here for similarity to all the other ones?
     std::string patchNote = "";
     if (patchNotePath.has_value()) {
         if (!fs::exists(*patchNotePath)) {
@@ -190,7 +106,7 @@ int Uploader::UpdateItem(std::optional<fs::path> descriptionPath,
     // Submit update to the workshop item.
     SubmitItemUpdate(updateHandle, patchNote);
 
-    // Continually monitor and update item status for errors.
+    // Continually monitor and update item status for errors until it's complete.
     EItemUpdateStatus previousUpdateStatus = k_EItemUpdateStatusInvalid;
     while (CheckProgress(updateHandle, &previousUpdateStatus)) {
         SteamAPI_RunCallbacks();
@@ -208,40 +124,168 @@ UGCUpdateHandle_t Uploader::CreateUpdateHandle(const PublishedFileId_t workshopI
     return SteamUGC()->StartItemUpdate(SteamUtils()->GetAppID(), workshopID);
 }
 
-bool Uploader::SetItemTitle(const UGCUpdateHandle_t handle, const std::string &title)
+bool Uploader::SetItemTitle(const UGCUpdateHandle_t handle, const std::optional<std::string> &title)
 {
-    return SteamUGC()->SetItemTitle(handle, title.c_str());
+    if (!title.has_value()) {
+        return false;
+    }
+
+    if (title->size() > k_cchPublishedDocumentTitleMax) {
+        spdlog::error("Title with length {} exceeds maximum length of {} characters.",
+            k_cchPublishedDocumentTitleMax, title->size());
+        return false;
+    }
+
+    const auto ret = SteamUGC()->SetItemTitle(handle, title->c_str());
+    if (!ret) {
+        spdlog::error("Failed to set item title to ({})", *title);
+    }
+
+    return ret;
 }
 
-bool Uploader::SetItemDescription(const UGCUpdateHandle_t handle, const std::string &pchDescription)
+bool Uploader::SetItemDescription(const UGCUpdateHandle_t handle,
+    const std::optional<fs::path> &descriptionFile)
 {
-    return SteamUGC()->SetItemDescription(handle, pchDescription.c_str());
+    if (!descriptionFile.has_value()) {
+        return false;
+    }
+
+    const auto pathStr = descriptionFile->string();
+    if (!fs::exists(*descriptionFile) || !fs::is_regular_file(*descriptionFile)) {
+        spdlog::error("Description file ({}) doesn't exist!", pathStr);
+        return false;
+    }
+
+    const auto description = readTxtFile(pathStr);
+    if (description.size() > k_cchPublishedDocumentDescriptionMax) {
+        spdlog::error("Description with length {} exceeds maximum length of {} characters.",
+            description.size(), k_cchPublishedDocumentDescriptionMax);
+        return false;
+    }
+
+    const auto ret = SteamUGC()->SetItemDescription(handle, pathStr.c_str());
+    if (!ret) {
+        spdlog::error("Failed to set item description with status {}", ret);
+    }
+
+    return ret;
 }
 
-bool Uploader::SetItemContent(const UGCUpdateHandle_t handle, const std::string &content)
+bool Uploader::SetItemContent(const UGCUpdateHandle_t handle,
+    const std::optional<fs::path> &contentPath)
 {
-    return SteamUGC()->SetItemContent(handle, content.c_str());
+    if (!contentPath.has_value()) {
+        return false;
+    }
+
+    const auto pathStr = contentPath->string();
+    if (!fs::exists(*contentPath) || !fs::is_directory(*contentPath)) {
+        spdlog::error("Content directory ({}) doesn't exist!", pathStr);
+        return false;
+    }
+
+    const auto ret = SteamUGC()->SetItemContent(handle, pathStr.c_str());
+    if (!ret) {
+        spdlog::error("Failed to set item content with status {}", ret);
+    }
+
+    return ret;
 }
 
-bool Uploader::SetItemPreview(const UGCUpdateHandle_t handle, const std::string &preview)
+bool Uploader::SetItemPreview(const UGCUpdateHandle_t handle,
+    const std::optional<fs::path> &previewFile)
 {
-    return SteamUGC()->SetItemPreview(handle, preview.c_str());
+    if (!previewFile.has_value()) {
+        return false;
+    }
+
+    const auto pathStr = previewFile->string();
+    if (!fs::exists(*previewFile) || !fs::is_regular_file(*previewFile)) {
+        spdlog::error("Preview file ({}) doesn't exist!", pathStr);
+        return false;
+    }
+
+    if (const auto previewSize = fs::file_size(*previewFile) >= 1048576) {
+        spdlog::error("Preview file with size {} exceeds maximum size of 1048576 bytes.",
+            previewSize);
+        return false;
+    }
+
+    const auto ret = SteamUGC()->SetItemPreview(handle, pathStr.c_str());
+    if (!ret) {
+        spdlog::error("Failed to set workshop item preview with status {}", ret);
+    }
+
+    return ret;
 }
 
 bool Uploader::SetItemVisibility(const UGCUpdateHandle_t handle,
-    const ERemoteStoragePublishedFileVisibility visibility)
+    const std::optional<int8_t> visibility)
 {
-    return SteamUGC()->SetItemVisibility(handle, visibility);
+    if (!visibility.has_value()) {
+        return false;
+    }
+
+    if (*visibility < k_ERemoteStoragePublishedFileVisibilityPublic ||
+        *visibility > k_ERemoteStoragePublishedFileVisibilityUnlisted)
+    {
+        spdlog::error("Invalid visibility with value ({}). Must be between 0 and 3!", *visibility);
+        return false;
+    }
+
+    const auto ret = SteamUGC()->SetItemVisibility(handle,
+        static_cast<ERemoteStoragePublishedFileVisibility>(*visibility));
+    if (!ret) {
+        spdlog::error("Failed to set item visibility to ({})", *visibility);
+    }
+
+    return ret;
 }
 
-bool Uploader::SetTags(const UGCUpdateHandle_t handle, const SteamParamStringArray_t *tags)
+bool Uploader::SetTags(const UGCUpdateHandle_t handle,
+    const std::optional<std::vector<std::string>> &tags)
 {
-    return SteamUGC()->SetItemTags(handle, tags);
+    if (!tags.has_value()) {
+        return false;
+    }
+
+    std::vector<const char *> tagsCstr{};
+    tagsCstr.resize(tags->size());
+    std::ranges::transform(tags->cbegin(), tags->cend(), tagsCstr.begin(), &std::string::c_str);
+
+    SteamParamStringArray_t tagArray{};
+    tagArray.m_ppStrings = tagsCstr.empty() ? nullptr : tagsCstr.data();
+    tagArray.m_nNumStrings = static_cast<int32_t>(tags->size());
+
+    const auto ret = SteamUGC()->SetItemTags(handle, &tagArray);
+    if (!ret) {
+        std::ostringstream os;
+        std::ranges::copy(*tags, std::ostream_iterator<std::string>(os, ","));
+        spdlog::error("Failed to set item tags to {}", os.str());
+    }
+
+    return ret;
 }
 
-bool Uploader::SetUploadLanguage(const UGCUpdateHandle_t handle, const std::string &language)
+bool Uploader::SetUploadLanguage(const UGCUpdateHandle_t handle,
+    const std::optional<std::string> &language)
 {
-    return SteamUGC()->SetItemUpdateLanguage(handle, language.c_str());
+    if (!language.has_value() || *language == "english") {
+        return false;
+    }
+
+    if (!IsValidSteamLanguageCode(*language)) {
+        spdlog::error("Invalid language code {}", *language);
+        return false;
+    }
+
+    const auto ret = SteamUGC()->SetItemUpdateLanguage(handle, language->c_str());
+    if (!ret) {
+        spdlog::error("Failed to set upload language to {}", *language);
+    }
+
+    return ret;
 }
 
 void Uploader::SubmitItemUpdate(const UGCUpdateHandle_t updateHandle, const std::string &content)
@@ -257,10 +301,10 @@ bool Uploader::CheckProgress(const UGCUpdateHandle_t updateHandle,
 {
     uint64 bytesProcessed = 0;
     uint64 bytes = 0;
-    EItemUpdateStatus eItemUpdateStatus =
+    const EItemUpdateStatus eItemUpdateStatus =
         SteamUGC()->GetItemUpdateProgress(updateHandle, &bytesProcessed, &bytes);
 
-    bool isValid = eItemUpdateStatus != k_EItemUpdateStatusInvalid;
+    const bool isValid = eItemUpdateStatus != k_EItemUpdateStatusInvalid;
 
     if (isValid && eItemUpdateStatus != *previousUpdateStatus) {
         spdlog::info("Update status: {}", EItemUpdateStatus_getDescription(eItemUpdateStatus));
@@ -268,7 +312,7 @@ bool Uploader::CheckProgress(const UGCUpdateHandle_t updateHandle,
         *previousUpdateStatus = eItemUpdateStatus;
     }
 
-    return (eItemUpdateStatus != k_EItemUpdateStatusInvalid);
+    return eItemUpdateStatus != k_EItemUpdateStatusInvalid;
 }
 
 // create new workshop item
@@ -277,7 +321,7 @@ void Uploader::CreateWorkshopItem()
     // https://partner.steamgames.com/doc/api/ISteamUGC#CreateItem
     // k_EWorkshopFileTypeCommunity can be swapped out to other existing options:
     // https://partner.steamgames.com/doc/api/ISteamRemoteStorage#EWorkshopFileType
-    SteamAPICall_t apiCall =
+    const SteamAPICall_t apiCall =
         SteamUGC()->CreateItem(SteamUtils()->GetAppID(), k_EWorkshopFileTypeCommunity);
     m_callResultCreate.Set(apiCall, this, &Uploader::OnCreateWorkshopItemResult);
 

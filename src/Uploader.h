@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -14,13 +15,13 @@ public:
 
     int UpdateItem(std::optional<fs::path> descriptionPath, std::optional<fs::path> previewPath,
         std::optional<fs::path> contentPath, std::optional<std::string> title,
-        std::optional<ERemoteStoragePublishedFileVisibility> visibility,
-        std::optional<std::vector<std::string>> tags, std::optional<fs::path> patchNotePath,
-        std::optional<std::string> language);
+        std::optional<int8_t> visibility, std::optional<std::vector<std::string>> tags,
+        std::optional<fs::path> patchNotePath, std::optional<std::string> language);
 
     bool InitSteamAPI();
-    bool ShutdownSteamAPI();
-    static bool CheckProgress(UGCUpdateHandle_t updateHandle, EItemUpdateStatus *previousUpdateStatus);
+    static bool ShutdownSteamAPI();
+    static bool CheckProgress(UGCUpdateHandle_t updateHandle,
+        EItemUpdateStatus *previousUpdateStatus);
 
 private:
     PublishedFileId_t m_workshopID;
@@ -35,14 +36,18 @@ private:
 
     // Functions that change UGC item data
 
-    static bool SetItemTitle(UGCUpdateHandle_t handle, const std::string &title);
-    static bool SetItemDescription(UGCUpdateHandle_t handle, const std::string &pchDescription);
-    static bool SetItemContent(UGCUpdateHandle_t handle, const std::string &content);
-    static bool SetItemPreview(UGCUpdateHandle_t handle, const std::string &preview);
-    static bool SetItemVisibility(UGCUpdateHandle_t handle,
-        ERemoteStoragePublishedFileVisibility visibility);
-    static bool SetTags(UGCUpdateHandle_t handle, const SteamParamStringArray_t *tags);
-    static bool SetUploadLanguage(UGCUpdateHandle_t handle, const std::string &language);
+    static bool SetItemTitle(UGCUpdateHandle_t handle, const std::optional<std::string> &title);
+    static bool SetItemDescription(UGCUpdateHandle_t handle,
+        const std::optional<fs::path> &descriptionFile);
+    static bool SetItemContent(UGCUpdateHandle_t handle,
+        const std::optional<fs::path> &contentPath);
+    static bool SetItemPreview(UGCUpdateHandle_t handle,
+        const std::optional<fs::path> &previewFile);
+    static bool SetItemVisibility(UGCUpdateHandle_t handle, std::optional<int8_t> visibility);
+    static bool SetTags(UGCUpdateHandle_t handle,
+        const std::optional<std::vector<std::string>> &tags);
+    static bool SetUploadLanguage(UGCUpdateHandle_t handle,
+        const std::optional<std::string> &language);
 
     //! Submits the item update with the patch note.
     void SubmitItemUpdate(UGCUpdateHandle_t updateHandle, const std::string &content);

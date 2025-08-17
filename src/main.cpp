@@ -1,12 +1,13 @@
-#include "steam/steam_api.h"
-
 #include "Util/Updater.h"
 
 #include "Uploader.h"
 
 #include "cxxopts.hpp"
+
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
+
+#include "steam/steam_api.h"
 
 #include <string>
 
@@ -104,15 +105,16 @@ int main(const int argc, const char *argv[])
         spdlog::set_level(spdlog::level::trace);
     }
 
-    if (opts.count("update") > 0) {
-        perform_update();
-        return 0;
-    } else {
-        const std::string latest_version = fetch_latest_version();
-        if (!latest_version.empty() && latest_version != PROJECT_VERSION) {
-            spdlog::warn("A new version ({}) is available!", latest_version);
-            spdlog::warn("Run with -U/--update to update.");
+    const std::string latest_version = fetch_latest_version();
+    if (!latest_version.empty() && latest_version != PROJECT_VERSION) {
+        spdlog::warn("A new version ({}) is available!", latest_version);
+
+        if (opts.count("update") > 0) {
+            perform_update();
+            return 0;
         }
+
+        spdlog::warn("Run with -U/--update to update.");
     }
 
     const auto appID = opts["appID"].as<AppId_t>();
@@ -122,7 +124,7 @@ int main(const int argc, const char *argv[])
     const auto previewPath = opts["preview"].as_optional<std::filesystem::path>();
     const auto contentPath = opts["content"].as_optional<std::filesystem::path>();
     const auto title = opts["title"].as_optional<std::string>();
-    const auto visibility = opts["visibility"].as_optional<ERemoteStoragePublishedFileVisibility>();
+    const auto visibility = opts["visibility"].as_optional<int8_t>();
     const auto tags = opts["tags"].as_optional<std::vector<std::string>>();
 
     const auto createNewUgc = opts.count("new") > 0;
