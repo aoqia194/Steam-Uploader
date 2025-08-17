@@ -70,7 +70,8 @@ int main(const int argc, const char *argv[])
         (
             "T,tags",
             "A comma-separated list of tags for the UGC item, or empty to remove all tags."
-                " Predefined tags are set by the developers of the game and thus only those should be used.",
+                " Predefined tags are set by the developers of the game and thus only those should be used."
+                " If the tags have spaces, wrap the list of tags in double-quotes.",
             cxxopts::value<std::vector<std::string>>()
         )
         (
@@ -121,19 +122,17 @@ int main(const int argc, const char *argv[])
     const auto previewPath = opts["preview"].as_optional<std::filesystem::path>();
     const auto contentPath = opts["content"].as_optional<std::filesystem::path>();
     const auto title = opts["title"].as_optional<std::string>();
-    const auto visibility =
-        opts["visibility"].as_optional<ERemoteStoragePublishedFileVisibility>();
+    const auto visibility = opts["visibility"].as_optional<ERemoteStoragePublishedFileVisibility>();
     const auto tags = opts["tags"].as_optional<std::vector<std::string>>();
 
-    const auto isNewUGC = opts.count("new") > 0;
+    const auto createNewUgc = opts.count("new") > 0;
     const auto patchNotePath = opts["patchNote"].as_optional<std::filesystem::path>();
     const auto language = opts["language"].as<std::string>();
 
     // If at least one required param doesn't exist, raise an error and exit.
-    if (!anyHasValue(descriptionPath, previewPath, contentPath, title, visibility, tags))
-    {
-        if (isNewUGC) {
-            const Uploader uploader(workshopID, appID, isNewUGC);
+    if (!anyHasValue(descriptionPath, previewPath, contentPath, title, visibility, tags)) {
+        if (createNewUgc) {
+            const Uploader uploader(workshopID, appID, createNewUgc);
             return 0;
         }
 
@@ -142,7 +141,7 @@ int main(const int argc, const char *argv[])
     }
 
     // Upload the item.
-    Uploader uploader(workshopID, appID, isNewUGC);
-    return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title,
-        visibility, tags, patchNotePath, language);
+    Uploader uploader(workshopID, appID, createNewUgc);
+    return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, tags,
+        patchNotePath, language);
 }

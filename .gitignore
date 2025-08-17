@@ -9,6 +9,8 @@
 !/lib
 !/src
 
+!/.clang-format
+!/.clang-tidy
 !/.gitignore
 !/cacert.pem
 !/CMakeLists.txt

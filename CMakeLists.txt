@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.30)
 
+set(SteamUploader_NAME "SteamUploader")
+set(SteamUploader_DESC "A CLI tool to update UGC on the Steam workshop")
 set(SteamUploader_VERSION 0.6.0)
 
-project(SteamUploader VERSION ${SteamUploader_VERSION})
+project(SteamUploader VERSION ${SteamUploader_VERSION} DESCRIPTION ${SteamUploader_DESC})
 
 # Set the CPM cache to .cache/ if there isn't one already.
 # Prevents downloading the same things over and over.
@@ -12,13 +14,25 @@ endif ()
 
 # Adding sources manually gives much faster builds than globbing the entire source dir
 add_executable(app ${SOURCES}
-        src/steam_uploader.cpp
+        src/main.cpp
         src/Uploader.cpp
+        src/Enum/EItemUpdateStatus.h
+        src/Enum/EResult.h
         src/Util/AppID.cpp
+        src/Util/AppID.h
+        src/Util/ExecCmd.h
+        src/Util/HasLanguage.h
         src/Util/ReadFile.cpp
-        src/Util/WarningHook.cpp)
+        src/Util/ReadFile.h
+        src/Util/Updater.h
+        src/Util/WarningHook.cpp
+        src/Util/WarningHook.h
+)
 target_compile_features(app PRIVATE cxx_std_23)
-target_compile_definitions(app PRIVATE PROJECT_VERSION="${SteamUploader_VERSION}")
+target_compile_definitions(app PRIVATE
+        PROJECT_NAME="${SteamUploader_NAME}"
+        PROJECT_DESCRIPTION="${SteamUploader_DESC}"
+        PROJECT_VERSION="${SteamUploader_VERSION}")
 
 # CPM Dependencies
 
