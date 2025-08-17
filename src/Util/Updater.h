@@ -35,19 +35,20 @@ std::string fetch_latest_version() {
 void perform_update() {
     std::cout << "Updating Steam-Uploader..." << std::endl;
 
-#if defined(_WIN32)
-    const std::string asset_name = "app-windows-latest.zip";
-    const std::string exe_name = "app-windows-latest.exe";
-    const std::string exe_target = "app-windows-latest.exe";
-    const std::string dll_name = "steam_api64.dll";
-    const std::string dll_target = "steam_api64.dll";
-#else
-    const std::string asset_name = "app-ubuntu-latest.zip";
-    const std::string exe_name = "app-ubuntu-latest";
-    const std::string exe_target = "app-ubuntu-latest";
-    const std::string so_name = "SteamAPI/linux64/libsteam_api.so";
-    const std::string so_target = "SteamAPI/linux64/libsteam_api.so";
-#endif
+    // assets and exec names based on windows or linux
+    #if defined(_WIN32)
+        const std::string asset_name = "app-windows-latest.zip";
+        const std::string exe_name = "app-windows-latest.exe";
+        const std::string exe_target = "app-windows-latest.exe";
+        const std::string dll_name = "steam_api64.dll";
+        const std::string dll_target = "steam_api64.dll";
+    #else
+        const std::string asset_name = "app-ubuntu-latest.zip";
+        const std::string exe_name = "app-ubuntu-latest";
+        const std::string exe_target = "app-ubuntu-latest";
+        const std::string so_name = "SteamAPI/linux64/libsteam_api.so";
+        const std::string so_target = "SteamAPI/linux64/libsteam_api.so";
+    #endif
 
     // Download the latest release info from GitHub API
     std::string api_url = "https://api.github.com/repos/sirdoggyjvla/Steam-Uploader/releases/latest";
@@ -104,7 +105,7 @@ void perform_update() {
     updater << "move /Y temp-update\\steam_api64.dll steam_api64.dll\n";
     updater << "rmdir /S /Q temp-update\n";
     updater << "del update.zip\n";
-    updater << "start \"\" app-windows-latest.exe\n";
+    // updater << "start \"\" app-windows-latest.exe\n";
     updater << "del \"%~f0\"\n"; // Deletes itself
     updater.close();
     // Launch the updater and exit

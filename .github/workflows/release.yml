@@ -15,53 +15,60 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Linux build
-      - name: Build on Linux
+
+      # Linux build with CMake
+      - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ make zip libcurl4-openssl-dev nlohmann-json3-dev
-          make
-          mv ./app ./app-${{ matrix.os }}
-          zip -r app-${{ matrix.os }}.zip app-${{ matrix.os }} SteamAPI/linux64/libsteam_api.so
+          sudo apt-get install -y g++ cmake zip libcurl4-openssl-dev nlohmann-json3-dev
 
-      # Windows: Download and extract curl development files
-      - name: Download curl for Windows
+      - name: Configure CMake (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cmake -S . -B build
+
+      - name: Build (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cmake --build build --config Release
+          mv build/app build/app-${{ matrix.os }}
+          zip -r app-${{ matrix.os }}.zip build/app-${{ matrix.os }} SteamAPI/linux64/libsteam_api.so
+
+      # Windows build with CMake
+      - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
+          choco install cmake -y
+          choco install zip -y
+          choco install mingw -y
           curl -LO https://curl.se/windows/dl-8.8.0_2/curl-8.8.0_2-win64-mingw.zip
           unzip curl-8.8.0_2-win64-mingw.zip -d curl-win
-          # Copy include and lib to expected locations
           mkdir -p ./curl/include ./curl/lib
           cp -r curl-win/curl-8.8.0_2-win64-mingw/include/curl ./curl/include/
           cp curl-win/curl-8.8.0_2-win64-mingw/lib/libcurl.dll.a ./curl/lib/
-          cp curl-win/curl-8.8.0_2-win64-mingw/bin/libcurl-x64.dll ./  # Correct DLL name
-      # Windows build
-      - name: Build on Windows
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          # Download nlohmann/json single header if not present
+          cp curl-win/curl-8.8.0_2-win64-mingw/bin/libcurl-x64.dll ./
           mkdir -p ./include/nlohmann
           if [ ! -f ./include/nlohmann/json.hpp ]; then
             curl -L -o ./include/nlohmann/json.hpp https://raw.githubusercontent.com/nlohmann/json/develop/single_include/nlohmann/json.hpp
           fi
-          # Ensure libcurl.a exists for MinGW linker
-          cp ./curl/lib/libcurl.dll.a ./curl/lib/libcurl.a
-          g++ -g $(find ./src -name '*.cpp') \
-            -o ./app-${{ matrix.os }}.exe \
-            -I. -I./include -I./curl/include \
-            -L./SteamAPI/win64 -L./curl/lib -lsteam_api64 -lcurl \
-            -Wl,-rpath,'$ORIGIN/SteamAPI/win64' \
-            -static-libgcc -static-libstdc++ -static \
-            -pthread
-        # Create zip using PowerShell
-      - name: Zip Windows build
+
+      - name: Configure CMake (Windows)
         if: matrix.os == 'windows-latest'
-        shell: pwsh
+        shell: bash
         run: |
-          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI/win64/steam_api64.dll, libcurl-x64.dll, cacert.pem -DestinationPath app-${{ matrix.os }}.zip
+          cmake -S . -B build -G "MinGW Makefiles"
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          cmake --build build --config Release
+          mv build/app.exe build/app-${{ matrix.os }}.exe
+          zip -r app-${{ matrix.os }}.zip build/app-${{ matrix.os }}.exe SteamAPI/win64/steam_api64.dll libcurl-x64.dll cacert.pem
+
+      # Upload build artifacts (unchanged)
 
       # Upload build artifacts
       - name: Upload build
