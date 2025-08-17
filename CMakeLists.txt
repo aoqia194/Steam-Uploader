@@ -25,7 +25,7 @@ if(WIN32)
     # Copy DLLs after build (optional)
     add_custom_command(TARGET app POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${CMAKE_SOURCE_DIR}/SteamAPI/win64/steam_api64.dll
+            ${CMAKE_SOURCE_DIR}/steam_api64.dll
             $<TARGET_FILE_DIR:app>
     )
     add_custom_command(TARGET app POST_BUILD
