@@ -1,215 +1,134 @@
-// default
-#include <getopt.h>
-#include <string>
-using std::string;
-
-// steam API
 #include "steam/steam_api.h"
 
-// random tools
-#include "Util/AppID.h"
 #include "Util/Updater.h"
 
-// main app
 #include "Uploader.h"
+
+#include "cxxopts.hpp"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+
+#include <string>
+
+#define PROJECT_NAME "Steam-Uploader"
+#define PROJECT_DESCRIPTION "A CLI tool to update UGC on the Steam workshop"
+// PROJECT_VERSION defined in CMake!
+
+#define LOGGER_PATTERN "[%Y-%m-%d %H:%M:%S] [%^%l%$] %v"
+#define BACKTRACE_SIZE 5
 
 // Implements this:
 // https://partner.steamgames.com/doc/features/workshop/implementation#uploading_a_workshop_item
-#define UPLOADER_VERSION "v0.5.0" // current app version
-#ifdef _WIN32
-#define OS_NAME "windows-latest"
-#else
-#define OS_NAME "ubuntu-latest"
-#endif
 
-// list of available parameters
-static struct option long_options[] = {
-    // default informations
-    {"appID", required_argument, 0, 'a'},
-    {"workshopID", required_argument, 0, 'w'},
-    {"folder", required_argument, 0, 'f'},
-    {"new", no_argument, 0, 'n'},
-
-    // parameters to upload
-    {"description", required_argument, 0, 'd'},
-    {"preview", required_argument, 0, 'p'},
-    {"content", required_argument, 0, 'c'},
-    {"title", required_argument, 0, 't'},
-    {"visibility", required_argument, 0, 'v'},
-    {"tags", required_argument, 0, 'T'},
-
-    // optional
-    {"patchNote", required_argument, 0, 'P'},
-    {"language", required_argument, 0, 'L'},
-
-    // verbose
-    {"verbose", no_argument, 0, 'V'}, // does nothing for now
-    {"update", no_argument, 0, 'U'}, // update app
-    {0, 0, 0, 0}
-};
-
-// Helper to generate short options string from `long_options`.
-std::string get_short_options(const struct option* options) {
-    std::ostringstream oss;
-    for (int i = 0; options[i].name != nullptr; ++i) {
-        if (options[i].val == 0) continue; // skip if no short option
-        oss << static_cast<char>(options[i].val);
-        if (options[i].has_arg == required_argument)
-            oss << ":";
-        else if (options[i].has_arg == optional_argument)
-            oss << "::";
-    }
-    return oss.str();
+template <typename... Args>
+bool anyHasValue(const Args&... args) {
+    return (... || args.has_value());
 }
 
-// Helper to check if all upload parameters are empty/unset.
-bool allUploadParamsEmpty(
-    const std::string& descriptionPath,
-    const std::string& previewPath,
-    const std::string& contentPath,
-    const std::string& title,
-    const std::string& folder,
-    ERemoteStoragePublishedFileVisibility visibility,
-    const std::string& tags
-) {
-    return descriptionPath.empty() &&
-           previewPath.empty() &&
-           contentPath.empty() &&
-           title.empty() &&
-           folder.empty() &&
-           visibility == static_cast<ERemoteStoragePublishedFileVisibility>(-1) &&
-           tags == "$EMPTY";
-}
-
-int main(int argc, char *argv[])
+int main(const int argc, const char *argv[])
 {
-    // parse command line arguments
-    int opt;
-    int option_index = 0;
+    spdlog::set_default_logger(spdlog::stdout_color_mt(PROJECT_NAME));
+    spdlog::set_pattern(LOGGER_PATTERN);
+    spdlog::enable_backtrace(BACKTRACE_SIZE);
+    spdlog::set_level(spdlog::level::info);
 
-    // init params
-    AppId_t appID = 0;
-    PublishedFileId_t workshopID = 0;
-    string folder; // path to the folder
-    bool isNew = false;
+    cxxopts::Options options(PROJECT_NAME, PROJECT_DESCRIPTION);
+    options.add_options()
+        ("h,help", "Shows help message with program usage.")
+        ("verbose", "Enables verbose logging.")
+        ("U,update", "Force update SteamUploader to the latest version.");
+    options.add_options("UGC")
+        ("a,appID", "App ID of the game", cxxopts::value<AppId_t>())
+        ("w,workshopID", "Workshop ID of the item. Overwritten by --new", cxxopts::value<PublishedFileId_t>());
+    options.add_options("Uploader")
+        (
+            "d,description",
+            "Path to a text file which contains the description for the UGC item. Follows the BBCode markdown format.",
+            cxxopts::value<std::filesystem::path>()
+        )
+        (
+            "p,preview",
+            "Path to the preview image or gif. Suggest using JPG/PNG/GIF. Possibly no limitations to image dimensions with a maximum file size of 1 MB.",
+            cxxopts::value<std::filesystem::path>()
+        )
+        (
+            "c,content",
+            "Path to the folder containing the content to upload.",
+            cxxopts::value<std::filesystem::path>()
+        )
+        ("t,title", "Title of the UGC item.")
+        (
+            "v,visibility",
+            "Visibility of the item on the workshop. Defaults to public visibility. [0 = public, 1 = friends-only, 2 = private/hidden, 3 = unlisted]",
+            cxxopts::value<int8_t>()->default_value("-1")
+        )
+        (
+            "T,tags",
+            "A comma-separated list of tags for the UGC item, or empty to remove all tags. Predefined tags are set by the developers of the game and thus only those should be used.",
+            cxxopts::value<std::vector<std::string>>()
+        )
+        (
+            "n,new",
+            "Creates a new UGC item (along with a new workshop ID). This will result in an empty workshop item without any details on the workshop page."
+        )
+        (
+            "P,patchNote",
+            "[OPTIONAL] Path to a text file which contains the patch notes for the update. Only needed if you upload new content. Follows the BBCode markdown format.",
+            cxxopts::value<std::filesystem::path>()
+        )
+        (
+            "L,language",
+            "[OPTIONAL] Target language code for the description and title of this specific upload. Defaults to 'english'. See more: https://partner.steamgames.com/doc/store/localization/languages",
+            cxxopts::value<std::string>()->default_value("english")
+        );
+    const auto opts = options.parse(argc, argv);
 
-    string descriptionPath; // path to description
-    string previewPath; // path to preview image
-    string contentPath; // path to content folder
-    string title; // title of the item
-    ERemoteStoragePublishedFileVisibility visibility = static_cast<ERemoteStoragePublishedFileVisibility>(-1); // nil value to detect unset visibility
-    string tags = "$EMPTY"; // tags to add (not implemented yet)
-
-    string patchNotePath = ""; // path to patch note
-    string language = "english"; // default language on Steam's side
-
-    bool verbose = false;
-
-    bool check_update = false;
-    bool do_update = false;
-
-    // retrieve short options
-    std::string short_options = get_short_options(long_options);
-
-    // parse command line arguments
-    while ((opt = getopt_long(argc, argv, short_options.c_str(), long_options, &option_index)) != -1)
-    {
-        switch (opt)
-        {
-        // appID
-        case 'a':
-            appID = static_cast<AppId_t>(std::strtoull(optarg, nullptr, 10));
-            break;
-
-        // workshop ID
-        case 'w':
-            workshopID = static_cast<PublishedFileId_t>(std::strtoull(optarg, nullptr, 10));
-            break;
-
-        // mod folder
-        case 'f':
-            folder = string(optarg);
-            break;
-
-        // call for a new workshop item creation
-        case 'n':
-            isNew = true;
-            break;
-
-        // parameters
-        case 'd': // description
-            descriptionPath = string(optarg);
-            break;
-        case 'p': // preview
-            previewPath = string(optarg);
-            break;
-        case 'c': // content folder
-            contentPath = string(optarg);
-            break;
-        case 't': // title
-            title = string(optarg);
-            break;
-        case 'v':
-            visibility = static_cast<ERemoteStoragePublishedFileVisibility>(std::stoi(optarg));
-            break;
-        case 'T': // tags
-            tags = string(optarg);
-            break;
-
-        // optional
-        case 'P': // patch note
-            patchNotePath = string(optarg);
-            break;
-        case 'L': // language
-            language = string(optarg);
-            break;
-
-        // verbose
-        case 'V':
-            verbose = true;
-            break;
-
-        case 'U': // update
-            do_update = true;
-            break;
-
-        // wrong argument passed down
-        default:
-            std::cerr << "Wrong usage: " << argv[0] << " see doc.\n";
-            return 1;
-        }
+    if (opts.count("help")) {
+        spdlog::info(options.help());
+        exit(0);
     }
 
-    // Check for updates on every run
-    std::string latest_version = fetch_latest_version();
-    if (!latest_version.empty() && latest_version != UPLOADER_VERSION) {
-        std::cout << "A new version (" << latest_version << ") is available! ";
-        std::cout << "Run with --update or -U to update.\n";
+    if (opts.count("verbose")) {
+        spdlog::set_level(spdlog::level::trace);
     }
 
-    if (do_update) {
+    if (opts.count("update") > 0) {
         perform_update();
         return 0;
+    } else {
+        const std::string latest_version = fetch_latest_version();
+        if (!latest_version.empty() && latest_version != PROJECT_VERSION) {
+            spdlog::warn("A new version ({}) is available!", latest_version);
+            spdlog::warn("Run with -U/--update to update.");
+        }
     }
 
-    // verify at least one of these parameters is set
-    if (allUploadParamsEmpty(descriptionPath, previewPath, contentPath, title, folder, visibility, tags)) {
-        // acceptable behavior, creating an empty workshop item
-        if (isNew) {
-            Uploader uploader(workshopID, appID, isNew);
+    const auto appID = opts["appID"].as<AppId_t>();
+    const auto workshopID = opts["workshopID"].as<PublishedFileId_t>();
+
+    const auto descriptionPath = opts["description"].as_optional<std::filesystem::path>();
+    const auto previewPath = opts["preview"].as_optional<std::filesystem::path>();
+    const auto contentPath = opts["content"].as_optional<std::filesystem::path>();
+    const auto title = opts["title"].as_optional<std::string>();
+    const auto visibility = opts["visibility"].as_optional<ERemoteStoragePublishedFileVisibility>();
+    const auto tags = opts["tags"].as_optional<std::vector<std::string>>();
+
+    const auto isNewUGC = opts.count("new") > 0;
+    const auto patchNotePath = opts["patchNote"].as_optional<std::filesystem::path>();
+    const auto language = opts["language"].as<std::string>();
+
+    // If at least one required param doesn't exist, raise an error and exit.
+    if (!anyHasValue(descriptionPath, previewPath, contentPath, title, visibility, tags)) {
+        if (isNewUGC) {
+            const Uploader uploader(workshopID, appID, isNewUGC);
             return 0;
         }
-        // improper behavior here however
-        std::cerr << "Error: All necessary parameters are empty. Nothing to upload.\n";
+
+        spdlog::error("All required arguments are empty -- there is nothing to upload.");
         return 1;
     }
 
-    // upload item
-    Uploader uploader(workshopID, appID, isNew);
-    return uploader.UpdateItem(
-        // at least one of
-        descriptionPath, previewPath, contentPath, title, visibility, tags, 
-        // optional
-        patchNotePath, language
-    );
+    // Upload the item.
+    Uploader uploader(workshopID, appID, isNewUGC);
+    return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, tags, patchNotePath, language);
 }

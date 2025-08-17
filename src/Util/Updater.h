@@ -1,8 +1,12 @@
+#pragma once
+
+#include "curl/curl.h"
+#include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
+
 #include <iostream>
-#include <sstream>
+#include <fstream>
 #include <string>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
 
 // Helper function for libcurl to write response to a string
 static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
@@ -33,7 +37,7 @@ std::string fetch_latest_version() {
 
 // Helper to perform the update (replace with your actual update logic)
 void perform_update() {
-    std::cout << "Updating Steam-Uploader..." << std::endl;
+    spdlog::info("Updating Steam-Uploader..");
 
     // assets and exec names based on windows or linux
     #if defined(_WIN32)
@@ -65,7 +69,7 @@ void perform_update() {
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &json_data);
             CURLcode res = curl_easy_perform(curl);
             if (res != CURLE_OK) {
-                std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+                spdlog::error("curl_easy_perform() failed: {}", curl_easy_strerror(res));
             }
             curl_easy_cleanup(curl);
         }
@@ -82,20 +86,23 @@ void perform_update() {
             }
         }
     } catch (...) {
-        std::cerr << "Failed to parse release info." << std::endl;
-        std::cerr << "Raw JSON data: " << json_data << std::endl; // <--- Add this line
+        spdlog::error("Failed to parse release info.");
+        spdlog::debug("Raw JSON data: {}", json_data);
         return;
     }
     if (zip_url.empty()) {
-        std::cerr << "Could not find release asset: " << asset_name << std::endl;
+        spdlog::error("Could not find release asset: {}", asset_name);
         return;
     }
     // Download the ZIP file
-    std::cout << "Downloading: " << zip_url << std::endl;
+    spdlog::info("Downloading ZIP from: ({})", zip_url);
 #if defined(_WIN32)
     std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str());
     std::system("powershell -Command \"Expand-Archive -Force update.zip temp-update\"");
     // Write a batch file to do the update after this process exits
+    // TODO: Have the update scripts in a scripts/ folder in the repository.
+    //       Download them with CURL to system temp folder and execute them.
+    //       This writing the update script from the program itself is bad.
     std::ofstream updater("run_update.bat");
     updater << "@echo off\n";
     updater << "echo Waiting for Steam-Uploader to exit...\n";
@@ -118,5 +125,5 @@ void perform_update() {
     std::system(("mv -f " + so_name + " " + so_target).c_str());
     std::system("rm -f update.zip");
 #endif
-    std::cout << "Update complete." << std::endl;
+    spdlog::info("Update complete!");
 }

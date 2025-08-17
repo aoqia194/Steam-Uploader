@@ -1,13 +1,13 @@
 #include "Uploader.h"
 
+#include "spdlog/spdlog.h"
 
 // Uploader class implementation
 
-// init
 Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID, bool isNew) {
     // an appID needs to be provided, it's a mandatory parameter
     if (appID == 0) {
-        std::cerr << "Error: Provide the appID.\n";
+        spdlog::error("appID is a required argument.");
         return;
     }
 
@@ -22,7 +22,7 @@ Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID, bool isNew) {
     if (isNew) {
         // catch user possibly doing wrong usage if they gave a wID and try to create a new item
         if (workshopID != 0) {
-            std::cerr << "Warning: You provided a workshopID (" << workshopID << ") while creating a new item but this ID will be ignored since a new one is created instead.\n";
+            spdlog::error("Warning: You provided a workshopID {} while creating a new item but this ID will be ignored since a new one is created instead.", workshopID);
         }
 
         this->m_workshopID = 0; // default value used when creating the item
@@ -30,7 +30,7 @@ Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID, bool isNew) {
 
     // workshopID can't be 0 if no new item is being created
     } else if (workshopID == 0) {
-        std::cerr << "Error: Provide the workshopID.\n";
+        spdlog::error("workshopID is a required argument. Either specify it, or use --new.");
         ShutdownSteamAPI();
         return;
 
@@ -46,27 +46,27 @@ Uploader::Uploader(PublishedFileId_t workshopID, AppId_t appID, bool isNew) {
 bool Uploader::InitSteamAPI() {
     bool success = SteamAPI_Init();
     if (!success) {
-        std::cerr << "Failed to initialize Steam API from appID " << this->m_appID << "!\n";
+        spdlog::error("Failed to initialize Steam API from appID ({})", this->m_appID);
         return success;
     }
 
-    std::cout << "Steam API initialized from appID " << this->m_appID << ".\n";
+    spdlog::debug("Steam API initialized from appID ({})", this->m_appID);
     // EnableWarningMessageHook();
     return success;
 }
 
 // shutdown Steam API
 bool Uploader::ShutdownSteamAPI() {
-    SteamAPI_Shutdown();
-    std::cout << "Steam API shutdown.\n";
-    return true;
+  spdlog::debug("ShutdownSteamAPI called - Shutting down SteamAPI.");
+  SteamAPI_Shutdown();
+  return true;
 }
 
 
 
 
 
-// main function
+// TODO: Jvla, you should probably split this up into multiple subfunctions, this function is massive!
 int Uploader::UpdateItem(
         // at least one of
         string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string tags, 
@@ -79,16 +79,16 @@ int Uploader::UpdateItem(
     // handle description
     if (!descriptionPath.empty()) {
         if (!exists(descriptionPath)) {
-            std::cerr << "Invalid description path: " << descriptionPath << ". Parameter must be a valid file.\n";
+            spdlog::error("Description file ({}) doesn't exist!", descriptionPath);
         } else {
             string description = readTxtFile(descriptionPath);
             // verify description size respects the limits
             if (description.size() > k_cchPublishedDocumentDescriptionMax) {
-                std::cerr << "Error: Description exceeds maximum length of " << k_cchPublishedDocumentDescriptionMax << " characters. (Current: " << description.size() << ")\n";
+                spdlog::error("Description with length {} exceeds maximum length of {} characters.", description.size(), k_cchPublishedDocumentDescriptionMax);
             } else {
                 bool success = SetItemDescription(updateHandle, description.c_str());
                 if (!success) {
-                    std::cerr << "Error: Failed to set item description.\n";
+                    spdlog::error("Failed to set item description because SetItemDescription returned {}", success);
                 }
             }
         }
@@ -97,13 +97,13 @@ int Uploader::UpdateItem(
     // handle preview
     if (!previewPath.empty()) {
         if (!exists(previewPath) || !is_regular_file(previewPath)) {
-            std::cerr << "Error: Invalid preview path (" << previewPath << "). Parameter must be a valid file.\n";
-        } else if (file_size(previewPath) > 1048576) {
-            std::cerr << "Error: Preview file is too large (" << file_size(previewPath) << " bytes). Maximum allowed is 1 MB.\n";
+            spdlog::warn("Preview file ({}) doesn't exist!", previewPath);
+        } else if (const auto previewSize = file_size(previewPath) >= 1048576) {
+            spdlog::warn("Preview file with size {} exceeds maximum size of 1048576 bytes.", previewSize);
         } else {
             bool success = SetItemPreview(updateHandle, previewPath.c_str());
             if (!success) {
-                std::cerr << "Error: Failed to set item preview. Suggested formats include JPG, PNG and GIF.\n";
+                spdlog::error("Failed to set workshop item preview.");
             }
         }
     }
@@ -111,11 +111,11 @@ int Uploader::UpdateItem(
     // handle content
     if (!contentPath.empty()) {
         if (!exists(contentPath) || !is_directory(contentPath)) {
-            std::cerr << "Invalid content path: " << contentPath << ". Parameter must be a valid folder.\n";
+            spdlog::error("Content file ({}) doesn't exist!", contentPath);
         } else {
             bool success = SetItemContent(updateHandle, contentPath.c_str());
             if (!success) {
-                std::cerr << "Error: Failed to set item content.\n";
+                spdlog::error("Failed to set item content.");
             }
         }
     }
@@ -123,25 +123,25 @@ int Uploader::UpdateItem(
     // handle title
     if (!title.empty()) {
         if (title.size() > k_cchPublishedDocumentTitleMax) {
-            std::cerr << "Error: Title exceeds maximum length of " << k_cchPublishedDocumentTitleMax << " characters. (Current: " << title.size() << ")\n";
+            spdlog::error("Title with length {} exceeds maximum length of {} characters.", k_cchPublishedDocumentTitleMax, title.size());
         } else {
             bool success = SetItemTitle(updateHandle, title.c_str());
             if (!success) {
-                std::cerr << "Error: Failed to set item title. (" << title << ")\n";
+                spdlog::error("Failed to set item title to ({}).", title);
             }
         }
     }
 
     // handle visibility
-    if (visibility != static_cast<ERemoteStoragePublishedFileVisibility>(-1)) {
-        // verify the given visibility value is valid
-        if (visibility >= 0 && visibility <= 3) {
+    const auto visibilityIdx = static_cast<int8_t>(visibility);
+    if (visibilityIdx != -1) {
+        if (visibility >= k_ERemoteStoragePublishedFileVisibilityPublic && visibility <= k_ERemoteStoragePublishedFileVisibilityUnlisted) {
             bool success = SetItemVisibility(updateHandle, visibility);
             if (!success) {
-                std::cerr << "Error: Failed to set item visibility. (" << visibility << ")\n";
+                spdlog::error("Failed to set item visibility to ({}).", visibilityIdx);
             }
         } else {
-            std::cerr << "Error: Invalid visibility value (" << visibility << "). Must be between 0 and 3.\n";
+            spdlog::error("Invalid visibility with value ({}). Must be between 0 and 3!", visibilityIdx);
         }
     }
     
@@ -168,7 +168,7 @@ int Uploader::UpdateItem(
 
         bool success = SetTags(updateHandle, &tagArray);
         if (!success) {
-            std::cerr << "Error: Failed to set item tags. (" << tags << ")\n";
+            spdlog::error("Failed to set item tags to {}.", tags);
         }
     }
 
@@ -178,11 +178,11 @@ int Uploader::UpdateItem(
     if (language != "english") {
         // verify it's a valid language for Steam
         if (!IsValidSteamLanguageCode(language)) {
-            std::cerr << "Error: Invalid language code. (" << language << ")\n";
+            spdlog::error("Invalid language code {}.", language);
         } else {
             bool success = SetUploadLanguage(updateHandle, language);
             if (!success) {
-                std::cerr << "Error: Failed to set upload language. ("<< language << ")\n";
+                spdlog::error("Failed to set upload language to {}.", language);
             }
         }
     }
@@ -191,7 +191,7 @@ int Uploader::UpdateItem(
     string patchNote = ""; // default
     if (!patchNotePath.empty()) {
         if (!exists(patchNotePath)) {
-            std::cerr << "Invalid patch note path: " << patchNotePath << ". Parameter must be a valid file.\n";
+            spdlog::error("Patch note file ({}) doesn't exist!");
         } else {
             patchNote = readTxtFile(patchNotePath);
         }
@@ -276,7 +276,7 @@ bool Uploader::CheckProgress(UGCUpdateHandle_t updateHandle, EItemUpdateStatus* 
     bool isValid = eItemUpdateStatus != k_EItemUpdateStatusInvalid;
 
     if (isValid && eItemUpdateStatus != *previousUpdateStatus) {
-        std::cout << "Update status: " << GetEItemUpdateStatusDescription(eItemUpdateStatus) << "\n";
+        spdlog::info("Update status: {}", GetEItemUpdateStatusDescription(eItemUpdateStatus));
 
         *previousUpdateStatus = eItemUpdateStatus;
     }
@@ -294,7 +294,7 @@ void Uploader::CreateWorkshopItem() {
     m_callResultCreate.Set(apiCall, this, &Uploader::OnCreateWorkshopItemResult);
 
     // TODO: add a timeout limit or an indicator for the user that the item is being created and awaiting Steam's response
-    std::cout << "Creating new workshop item...\n";
+    spdlog::info("Creating new workshop item...");
     while (true) {
         SteamAPI_RunCallbacks();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -313,14 +313,14 @@ void Uploader::CreateWorkshopItem() {
 void Uploader::OnSubmitItemUpdateResult(SubmitItemUpdateResult_t* eResult, bool needUserAgreement)
 {
     if (needUserAgreement) {
-        std::cerr << "User needs to accept the workshop legal agreement before submitting the item update.\n";
+        spdlog::error("Please accept the Steam Workshop legal agreement before submitting an item update.");
         return;
     }
     if (eResult->m_eResult == k_EResultOK) {
-        std::cout << "Item update submitted successfully!\n";
+        spdlog::info("Item update submitted successfully!");
     } else {
         // Enum doc: https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdateResult_t
-        std::cerr << "Failed to submit item update. (" << GetEResultName(eResult->m_eResult) << ": " << GetEResultDescription(eResult->m_eResult) << ")\n";
+        spdlog::error("Failed to submit item update. ({}: {})", GetEResultName(eResult->m_eResult), GetEResultDescription(eResult->m_eResult));
     };
 }
 
@@ -328,14 +328,14 @@ void Uploader::OnSubmitItemUpdateResult(SubmitItemUpdateResult_t* eResult, bool 
 void Uploader::OnCreateWorkshopItemResult(CreateItemResult_t* eResult, bool needUserAgreement)
 {
     if (needUserAgreement) {
-        std::cerr << "User needs to accept the workshop legal agreement before submitting the item update.\n";
+        spdlog::error("Please accept the Steam Workshop legal agreement before submitting an item update.");
         return;
     }
     if (eResult->m_eResult == k_EResultOK) {
-        std::cout << "Item created successfully at workshop " << eResult->m_nPublishedFileId << "!\n";
+        spdlog::info("Item created successfully at workshop {}!", eResult->m_nPublishedFileId);
         this->m_workshopID = eResult->m_nPublishedFileId; // update workshop ID
     } else {
         // Enum doc: https://partner.steamgames.com/doc/api/ISteamUGC#SubmitItemUpdateResult_t
-        std::cerr << "Failed to submit item update. (" << GetEResultName(eResult->m_eResult) << ": " << GetEResultDescription(eResult->m_eResult) << ")\n";
-    };
+        spdlog::error("Failed to submit item update. ({}: {})", GetEResultName(eResult->m_eResult), GetEResultDescription(eResult->m_eResult));
+    }
 }

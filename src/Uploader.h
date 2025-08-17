@@ -36,12 +36,7 @@ public:
 
     // METHODS
     // main call
-    int UpdateItem(
-        // at least one of
-        string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string tags, 
-        // optional
-        string patchNotePath, string language
-    );
+    int UpdateItem(string descriptionPath, string previewPath, string contentPath, string title, ERemoteStoragePublishedFileVisibility visibility, string tags, string patchNotePath, string language);
 
     bool InitSteamAPI();
     bool ShutdownSteamAPI();
