@@ -1,39 +1,57 @@
-cmake_minimum_required(VERSION 3.15)
-project(SteamUploader)
+cmake_minimum_required(VERSION 3.30)
 
-set(CMAKE_CXX_STANDARD 17)
+# Prevents in-source builds
+include(cmake/prelude.cmake)
 
-# Gather all source files
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+project(SteamUploader LANGUAGES CXX)
 
-add_executable(app ${SOURCES})
+# Set the CPM cache to .cache/ if there isn't one already.
+# Prevents downloading the same things over and over.
+if (NOT DEFINED ENV{CPM_SOURCE_CACHE})
+    set(ENV{CPM_SOURCE_CACHE} "${CMAKE_PROJECT_DIR}/.cache/CPM")
+endif ()
 
-# Platform-specific settings
-if(WIN32)
-    # Windows settings
-    target_include_directories(app PRIVATE
-        ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/include/curl
-        ${CMAKE_SOURCE_DIR}/include/nlohmann
-        ${CMAKE_SOURCE_DIR} # for steam
-    )
-    target_link_directories(app PRIVATE
-        ${CMAKE_SOURCE_DIR}/SteamAPI/win64
-        ${CMAKE_SOURCE_DIR}/lib
-    )
-    target_link_libraries(app steam_api64 ${CMAKE_SOURCE_DIR}/lib/libcurl.dll.a)
-    target_link_options(app PRIVATE -static-libgcc -static-libstdc++ -static)
-else()
-    # Linux settings
-    find_package(CURL REQUIRED)
-    target_include_directories(app PRIVATE
-        /usr/include/nlohmann
-        ${CMAKE_SOURCE_DIR} # for steam
-    )
-    target_link_directories(app PRIVATE
-        ${CMAKE_SOURCE_DIR}/SteamAPI/linux64
-        ${CMAKE_SOURCE_DIR}
-    )
-    target_link_libraries(app steam_api curl pthread)
-    target_link_options(app PRIVATE -Wl,-rpath,'$ORIGIN')
-endif()
+# Adding sources manually gives much faster builds than globbing the entire source dir
+add_executable(app ${SOURCES}
+        src/steam_uploader.cpp
+        src/Uploader.cpp
+        src/Util/AppID.cpp
+        src/Util/ReadFile.cpp
+        src/Util/WarningHook.cpp)
+target_compile_features(app PRIVATE cxx_std_23)
+
+# CPM Dependencies
+
+include(cmake/CPM.cmake)
+
+CPMAddPackage(
+        NAME curl
+        GIT_REPOSITORY https://github.com/curl/curl.git
+        GIT_TAG "curl-8_15_0"
+        OPTIONS "BUILD_EXAMPLES OFF" "CURL_BUILD_TESTING OFF"
+        DOWNLOAD_ONLY YES)
+
+if (curl_ADDED)
+    # We don't need to configure curl, only want the include files!
+    file(GLOB curl_sources "${curl_SOURCE_DIR}/include/curl/*.h")
+    add_library(curl STATIC ${curl_sources})
+    set_target_properties(curl PROPERTIES LINKER_LANGUAGE CXX)
+    #    target_include_directories(curl PUBLIC $<BUILD_INTERFACE:${curl_SOURCE_DIR}/include>)
+endif ()
+
+CPMAddPackage(URI "gh:nlohmann/json@3.12.0"
+        OPTIONS "JSON_BuildTests OFF")
+
+CPMAddPackage(
+        URI "gh:jarro2783/cxxopts@3.3.1"
+        OPTIONS
+        "CXXOPTS_BUILD_EXAMPLES NO"
+        "CXXOPTS_BUILD_TESTS NO"
+        "CXXOPTS_ENABLE_INSTALL YES")
+
+target_link_libraries(app PRIVATE curl nlohmann_json::nlohmann_json)
+
+# Includes and libs
+
+target_include_directories(app PRIVATE include)
+target_link_libraries(app PRIVATE lib)
