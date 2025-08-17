@@ -21,6 +21,7 @@ if(WIN32)
         ${CMAKE_SOURCE_DIR}/curl/lib
     )
     target_link_libraries(app steam_api64 curl)
+    target_link_options(app PRIVATE -static-libgcc -static-libstdc++ -static)
     # Copy DLLs after build (optional)
     add_custom_command(TARGET app POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -40,7 +41,7 @@ else()
         ${CMAKE_SOURCE_DIR} # for steam
     )
     target_link_directories(app PRIVATE
-        ${CMAKE_SOURCE_DIR}/SteamAPI/linux64
+        ${CMAKE_SOURCE_DIR}
     )
     target_link_libraries(app steam_api curl pthread)
     target_link_options(app PRIVATE -Wl,-rpath,'$ORIGIN')
