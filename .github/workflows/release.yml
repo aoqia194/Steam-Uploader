@@ -68,6 +68,7 @@ jobs:
           cmake --build build --config Release
           mv build/app.exe app.exe
           mv SteamAPI/win64/steam_api64.dll steam_api64.dll
+          cp curl-win/curl-8.8.0_2-win64-mingw/bin/libcurl-x64.dll ./libcurl-x64.dll
           zip -r app-${{ matrix.os }}.zip app.exe steam_api64.dll libcurl-x64.dll cacert.pem
 
       # Upload build artifacts (unchanged)
