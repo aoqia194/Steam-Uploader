@@ -29,7 +29,7 @@ if(WIN32)
     )
     add_custom_command(TARGET app POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${CMAKE_SOURCE_DIR}/curl/lib/libcurl-x64.dll
+            ${CMAKE_SOURCE_DIR}/libcurl-x64.dll
             $<TARGET_FILE_DIR:app>
     )
 else()
