@@ -22,17 +22,6 @@ if(WIN32)
     )
     target_link_libraries(app steam_api64 curl)
     target_link_options(app PRIVATE -static-libgcc -static-libstdc++ -static)
-    # Copy DLLs after build (optional)
-    add_custom_command(TARGET app POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${CMAKE_SOURCE_DIR}/steam_api64.dll
-            $<TARGET_FILE_DIR:app>
-    )
-    add_custom_command(TARGET app POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${CMAKE_SOURCE_DIR}/libcurl-x64.dll
-            $<TARGET_FILE_DIR:app>
-    )
 else()
     # Linux settings
     find_package(CURL REQUIRED)
