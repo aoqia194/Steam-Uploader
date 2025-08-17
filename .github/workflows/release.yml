@@ -15,34 +15,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Linux build
-      - name: Build on Linux
+
+      # Linux build with CMake
+      - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ make zip
-          make
-          mv ./app ./app-${{ matrix.os }}
-          zip -r app-${{ matrix.os }}.zip app-${{ matrix.os }} SteamAPI/linux64/libsteam_api.so
+          sudo apt-get install -y g++ cmake zip libcurl4-openssl-dev nlohmann-json3-dev
 
-      # Windows build
-      - name: Build on Windows
+      - name: Configure CMake (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cmake -S . -B build
+
+      - name: Build (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cmake --build build --config Release
+          mv build/app app
+          mv SteamAPI/linux64/libsteam_api.so libsteam_api.so
+          zip -r app-${{ matrix.os }}.zip app libsteam_api.so
+
+      # Windows build with CMake
+      - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          g++ -g $(find ./src -name '*.cpp') \
-            -o ./app-${{ matrix.os }}.exe \
-            -I. \
-            -L./SteamAPI/win64 -lsteam_api64 \
-            -Wl,-rpath,'$ORIGIN/SteamAPI/win64' \
-            -static-libgcc -static-libstdc++ -static \
-            -pthread
-        # Create zip using PowerShell
-      - name: Zip Windows build
+          choco install cmake -y
+          choco install zip -y
+          choco install mingw -y
+
+      - name: Configure CMake (Windows)
         if: matrix.os == 'windows-latest'
-        shell: pwsh
+        shell: bash
         run: |
-          Compress-Archive -Path app-${{ matrix.os }}.exe, SteamAPI/win64/steam_api64.dll -DestinationPath app-${{ matrix.os }}.zip
+          cmake -S . -B build -G "MinGW Makefiles"
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          cmake --build build --config Release
+          mv build/app.exe app.exe
+          mv SteamAPI/win64/steam_api64.dll steam_api64.dll
+          zip -r app-${{ matrix.os }}.zip app.exe steam_api64.dll cacert.pem
+
+      # Upload build artifacts (unchanged)
 
       # Upload build artifacts
       - name: Upload build

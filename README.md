@@ -15,13 +15,13 @@ For paths with spaces, make sure to put them in between quote marks `"`.
 2. Use the application by calling it with the various arguments key-value pairs:
 - Windows:
 ```bash
-app-windows-latest -k value # short key version
-app-windows-latest --key value # long key version
-app-windows-latest --appID appid --workshopID id -p preview # multiple keys
+app.exe -k value # short key version
+app.exe --key value # long key version
+app.exe --appID appid --workshopID id -p preview # multiple keys
 ```
 - Linux, same thing but instead call the app by doing:
 ```bash
-./app-ubuntu-latest #...
+./app #...
 ```
 
 ## Arguments
@@ -47,6 +47,12 @@ Below are optional parameters:
 |--|--|--|--|
 | Patch note | <code>-P <span style="color:green">path</span></code> | <code>--patchNote <span style="color:green">path</span></code> | <span style="color:green">Path</span> to a text file which holds the patch note of the update. This is supposedly only needed if you upload new content. The patch note uses [BBCode](https://pzwiki.net/wiki/BBCode). |
 | Language | <code>-L <span style="color:green">languageCode</span></code> | <code>--language <span style="color:green">languageCode</span></code> | Specify the targeted language for the description and title of this specific upload by indicating the [API language code](https://partner.steamgames.com/doc/store/localization/languages). By default uses <code><span style="color:green">english</span></code>. <BR><BR> Steam is able to render a different description and title based on the user's Steam app language, giving the modders the ability to provide a translated translation for multiple language. |
+| Update application | <code>-U</code> | <code>--update</code> | Force updates the application to the last version. |
+
+## Auto-updater
+The application detects whenever a more recent version of the Steam Uploader exists and logs a message in the console. You can use `-U` or `--update` as command arguments to automatically download the update. 
+
+In Linux, this is done smoothly but in Windows this creates a bash files which runs and triggers the update once the application exits, opening a secondary command line interpreter.
 
 ## Examples
 For these examples, consider the Workshop ID `123456789`, a user name `user` on the computer and using the Project Zomboid's [mod structure](https://pzwiki.net/wiki/Mod_structure) (appID: 108600).
