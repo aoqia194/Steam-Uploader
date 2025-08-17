@@ -49,7 +49,7 @@ jobs:
           mkdir -p ./curl/include ./curl/lib
           cp -r curl-win/curl-8.8.0_2-win64-mingw/include/curl ./curl/include/
           cp curl-win/curl-8.8.0_2-win64-mingw/lib/libcurl.dll.a ./curl/lib/
-          cp curl-win/curl-8.8.0_2-win64-mingw/bin/libcurl-x64.dll ./
+          cp curl-win/curl-8.8.0_2-win64-mingw/lib/libcurl.dll.a ./curl/lib/libcurl.a
           mkdir -p ./include/nlohmann
           if [ ! -f ./include/nlohmann/json.hpp ]; then
             curl -L -o ./include/nlohmann/json.hpp https://raw.githubusercontent.com/nlohmann/json/develop/single_include/nlohmann/json.hpp
