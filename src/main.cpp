@@ -5,14 +5,12 @@
 #include "Uploader.h"
 
 #include "cxxopts.hpp"
-#include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/spdlog.h"
 
 #include <string>
 
-#define PROJECT_NAME "Steam-Uploader"
-#define PROJECT_DESCRIPTION "A CLI tool to update UGC on the Steam workshop"
-// PROJECT_VERSION defined in CMake!
+// NOTE: Project macros are defined in CMake! Change it there.
 
 #define LOGGER_PATTERN "[%Y-%m-%d %H:%M:%S] [%^%l%$] %v"
 #define BACKTRACE_SIZE 5
@@ -20,8 +18,11 @@
 // Implements this:
 // https://partner.steamgames.com/doc/features/workshop/implementation#uploading_a_workshop_item
 
-template <typename... Args>
-bool anyHasValue(const Args&... args) {
+//! Checks to see if any one optional has a value.
+//! @param args a list of optionals to check
+//! @return if any one optional has a value
+template <typename... Args> bool anyHasValue(const Args &...args)
+{
     return (... || args.has_value());
 }
 
@@ -32,6 +33,7 @@ int main(const int argc, const char *argv[])
     spdlog::enable_backtrace(BACKTRACE_SIZE);
     spdlog::set_level(spdlog::level::info);
 
+    // clang-format off
     cxxopts::Options options(PROJECT_NAME, PROJECT_DESCRIPTION);
     options.add_options()
         ("h,help", "Shows help message with program usage.")
@@ -43,12 +45,14 @@ int main(const int argc, const char *argv[])
     options.add_options("Uploader")
         (
             "d,description",
-            "Path to a text file which contains the description for the UGC item. Follows the BBCode markdown format.",
+            "Path to a text file which contains the description for the UGC item."
+                " Follows the BBCode markdown format.",
             cxxopts::value<std::filesystem::path>()
         )
         (
             "p,preview",
-            "Path to the preview image or gif. Suggest using JPG/PNG/GIF. Possibly no limitations to image dimensions with a maximum file size of 1 MB.",
+            "Path to the preview image or gif with maximum file size of 1 MiB."
+                " Suggest using JPG/PNG/GIF with (possibly) no limit to image dimensions.",
             cxxopts::value<std::filesystem::path>()
         )
         (
@@ -59,33 +63,40 @@ int main(const int argc, const char *argv[])
         ("t,title", "Title of the UGC item.")
         (
             "v,visibility",
-            "Visibility of the item on the workshop. Defaults to public visibility. [0 = public, 1 = friends-only, 2 = private/hidden, 3 = unlisted]",
+            "Visibility of the item on the workshop. Defaults to public visibility."
+                " [0 = public, 1 = friends-only, 2 = private/hidden, 3 = unlisted]",
             cxxopts::value<int8_t>()->default_value("-1")
         )
         (
             "T,tags",
-            "A comma-separated list of tags for the UGC item, or empty to remove all tags. Predefined tags are set by the developers of the game and thus only those should be used.",
+            "A comma-separated list of tags for the UGC item, or empty to remove all tags."
+                " Predefined tags are set by the developers of the game and thus only those should be used.",
             cxxopts::value<std::vector<std::string>>()
         )
         (
             "n,new",
-            "Creates a new UGC item (along with a new workshop ID). This will result in an empty workshop item without any details on the workshop page."
+            "Creates a new UGC item (along with a new workshop ID)."
+                " This will result in an empty workshop item without any details on the workshop page."
         )
         (
             "P,patchNote",
-            "[OPTIONAL] Path to a text file which contains the patch notes for the update. Only needed if you upload new content. Follows the BBCode markdown format.",
+            "[OPTIONAL] Path to a text file which contains the patch notes for the update."
+                " Only needed if you upload new content. Follows the BBCode markdown format.",
             cxxopts::value<std::filesystem::path>()
         )
         (
             "L,language",
-            "[OPTIONAL] Target language code for the description and title of this specific upload. Defaults to 'english'. See more: https://partner.steamgames.com/doc/store/localization/languages",
+            "[OPTIONAL] Target language code for the description and title of this specific upload."
+                " Defaults to 'english'."
+                " See more: https://partner.steamgames.com/doc/store/localization/languages",
             cxxopts::value<std::string>()->default_value("english")
         );
     const auto opts = options.parse(argc, argv);
+    // clang-format on
 
     if (opts.count("help")) {
         spdlog::info(options.help());
-        exit(0);
+        return 0;
     }
 
     if (opts.count("verbose")) {
@@ -110,7 +121,8 @@ int main(const int argc, const char *argv[])
     const auto previewPath = opts["preview"].as_optional<std::filesystem::path>();
     const auto contentPath = opts["content"].as_optional<std::filesystem::path>();
     const auto title = opts["title"].as_optional<std::string>();
-    const auto visibility = opts["visibility"].as_optional<ERemoteStoragePublishedFileVisibility>();
+    const auto visibility =
+        opts["visibility"].as_optional<ERemoteStoragePublishedFileVisibility>();
     const auto tags = opts["tags"].as_optional<std::vector<std::string>>();
 
     const auto isNewUGC = opts.count("new") > 0;
@@ -118,7 +130,8 @@ int main(const int argc, const char *argv[])
     const auto language = opts["language"].as<std::string>();
 
     // If at least one required param doesn't exist, raise an error and exit.
-    if (!anyHasValue(descriptionPath, previewPath, contentPath, title, visibility, tags)) {
+    if (!anyHasValue(descriptionPath, previewPath, contentPath, title, visibility, tags))
+    {
         if (isNewUGC) {
             const Uploader uploader(workshopID, appID, isNewUGC);
             return 0;
@@ -130,5 +143,6 @@ int main(const int argc, const char *argv[])
 
     // Upload the item.
     Uploader uploader(workshopID, appID, isNewUGC);
-    return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, tags, patchNotePath, language);
+    return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title,
+        visibility, tags, patchNotePath, language);
 }
