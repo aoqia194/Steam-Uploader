@@ -13,14 +13,15 @@ if(WIN32)
     # Windows settings
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/curl/include
+        ${CMAKE_SOURCE_DIR}/include/curl
+        ${CMAKE_SOURCE_DIR}/include/nlohmann
         ${CMAKE_SOURCE_DIR} # for steam
     )
     target_link_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/SteamAPI/win64
-        ${CMAKE_SOURCE_DIR}/curl/lib
+        ${CMAKE_SOURCE_DIR}/lib
     )
-    target_link_libraries(app steam_api64 curl)
+    target_link_libraries(app steam_api64 ${CMAKE_SOURCE_DIR}/lib/libcurl.dll.a)
     target_link_options(app PRIVATE -static-libgcc -static-libstdc++ -static)
 else()
     # Linux settings
