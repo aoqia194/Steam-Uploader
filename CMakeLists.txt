@@ -41,6 +41,7 @@ else()
         ${CMAKE_SOURCE_DIR} # for steam
     )
     target_link_directories(app PRIVATE
+        ${CMAKE_SOURCE_DIR}/SteamAPI/linux64
         ${CMAKE_SOURCE_DIR}
     )
     target_link_libraries(app steam_api curl pthread)
