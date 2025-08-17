@@ -32,8 +32,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cmake --build build --config Release
-          mv build/app build/app-${{ matrix.os }}
-          zip -r app-${{ matrix.os }}.zip build/app-${{ matrix.os }} SteamAPI/linux64/libsteam_api.so
+          mv build/app app
+          mv SteamAPI/linux64/libsteam_api.so libsteam_api.so
+          zip -r app-${{ matrix.os }}.zip app libsteam_api.so
 
       # Windows build with CMake
       - name: Install dependencies (Windows)
@@ -65,8 +66,9 @@ jobs:
         shell: bash
         run: |
           cmake --build build --config Release
-          mv build/app.exe build/app-${{ matrix.os }}.exe
-          zip -r app-${{ matrix.os }}.zip build/app-${{ matrix.os }}.exe SteamAPI/win64/steam_api64.dll libcurl-x64.dll cacert.pem
+          mv build/app.exe app.exe
+          mv SteamAPI/win64/steam_api64.dll steam_api64.dll
+          zip -r app-${{ matrix.os }}.zip app.exe steam_api64.dll libcurl-x64.dll cacert.pem
 
       # Upload build artifacts (unchanged)
 
