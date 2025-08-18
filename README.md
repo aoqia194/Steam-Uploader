@@ -6,6 +6,10 @@ Custom tool to update items on the Steam Workshop. Allows you to independently u
 Building should be done with gcc/clang++/etc.
 Use Mingw64 on Windows. **AVOID MSVC as it is not supported**.
 
+The only external dependency that is required is curl (and it's dependencies).
+On Windows, it is automatically downloaded and linked against.
+On Linux, it needs to be added via the package manager.
+
 Building in release mode:
 
 ```sh

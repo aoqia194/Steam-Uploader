@@ -77,11 +77,11 @@ bool Uploader::ShutdownSteamAPI()
 }
 
 // TODO: Should probably split this up into multiple subfunctions, this function is massive!
-int Uploader::UpdateItem(std::optional<fs::path> descriptionPath,
-    std::optional<fs::path> previewPath, std::optional<fs::path> contentPath,
-    std::optional<std::string> title, std::optional<int8_t> visibility,
-    std::optional<std::vector<std::string>> tags, std::optional<fs::path> patchNotePath,
-    std::optional<std::string> language)
+int Uploader::UpdateItem(const std::optional<fs::path> &descriptionPath,
+    const std::optional<fs::path> &previewPath, const std::optional<fs::path> &contentPath,
+    const std::optional<std::string> &title, const std::optional<int8_t> visibility,
+    const std::optional<std::vector<std::string>> &tags,
+    const std::optional<fs::path> &patchNotePath, const std::optional<std::string> &language)
 {
     UGCUpdateHandle_t updateHandle = CreateUpdateHandle(this->m_workshopID);
 
@@ -94,7 +94,7 @@ int Uploader::UpdateItem(std::optional<fs::path> descriptionPath,
     SetUploadLanguage(updateHandle, language);
 
     // Patch notes
-    std::string patchNote = "";
+    std::string patchNote;
     if (patchNotePath.has_value()) {
         if (!fs::exists(*patchNotePath)) {
             spdlog::error("Patch note file ({}) doesn't exist!", patchNotePath->string());

@@ -4,12 +4,6 @@ if (cmake_OS_ARCH)
             URL "https://curl.se/windows/dl-8.15.0_4/curl-8.15.0_4-${cmake_OS_ARCH}-mingw.zip"
             VERSION "8.15.0_4"
     )
-elseif (OS_ARCH STREQUAL "linux64")
-    CPMAddPackage(
-            NAME CURL
-            URL "https://curl.se/download/curl-8.15.0.tar.gz"
-            VERSION "8.15.0"
-    )
 endif ()
 
 if (CURL_ADDED)

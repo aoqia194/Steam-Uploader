@@ -3,6 +3,7 @@
 #include "steam/steam_api.h"
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -13,10 +14,9 @@ class Uploader
 public:
     Uploader(PublishedFileId_t workshopID, AppId_t appID, bool createNewUgc);
 
-    int UpdateItem(std::optional<fs::path> descriptionPath, std::optional<fs::path> previewPath,
-        std::optional<fs::path> contentPath, std::optional<std::string> title,
-        std::optional<int8_t> visibility, std::optional<std::vector<std::string>> tags,
-        std::optional<fs::path> patchNotePath, std::optional<std::string> language);
+    int UpdateItem(const std::optional<fs::path>& descriptionPath, const std::optional<fs::path>& previewPath, const std::optional<fs::path> &contentPath, const std::optional<std::string>& title,
+        std::optional<int8_t> visibility, const std::optional<std::vector<std::string>>& tags,
+        const std::optional<fs::path> &patchNotePath, const std::optional<std::string>& language);
 
     bool InitSteamAPI();
     static bool ShutdownSteamAPI();
