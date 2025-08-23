@@ -1,119 +1,162 @@
-# Steam Uploader (WIP)
-Custom tool to update items on the Steam Workshop. Allows you to independently update specific elements like the item title, its content, the preview etc.
+# Steam Uploader
 
-## Building with CMake
+> [!NOTE]
+> This tool is a work in progress. Please notify us of any bugs via the issues page.
 
-Building should be done with gcc/clang++/etc.
-Use Mingw64 on Windows. **AVOID MSVC as it is not supported**.
+A CLI tool to update items on the Steam Workshop independently from the game.
+Most workshop features are supported, but more are on their way!
 
-The only external dependency that is required is curl (and it's dependencies).
-On Windows, it is automatically downloaded and linked against.
-On Linux, it needs to be added via the package manager.
+---
+
+## Usage
+
+> [!NOTE]
+> Steam needs to be open (even in the background) to use the tool!
+
+1. Open a terminal/CLI in the program's containing folder in the folder:
+   
+   #### Windows
+   
+    In the File Explorer address bar with the breadcrums of the folder you're in,
+    you can click the empty area and type `cmd` to open the terminal inside this folder.
+    Alternatively, open the Command Prompt application and set the cwd via
+   
+   ```bash
+       cd path/to/folder
+   ```
+   
+    For paths with spaces, make sure to enclose them with the double-quotes `"` symbol.
+   
+   #### Linux / MacOS
+   
+    Open the respective terminal app and cd to the folder like the above codeblock.
+2. Use the application! If you need some help with this, see the [examples](#examples).
+
+## Arguments
+
+These are the arguments for the tool.
+If you need to view the short versions of these parameters, see the help page of the application via:
+
+```bash
+./SteamUploader -h
+```
+
+> [!IMPORTANT]
+> The parameters listed below are mandatory.
+
+| Argument                  | Description                                                                                        |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| `--appID appID`           | The [App ID](https://pzwiki.net/wiki/App_ID) for your game.                                        |
+| `--workshopID workshopID` | The [Workshop ID](https://pzwiki.net/wiki/Workshop_ID) of your item. Overwritten by using `--new`. |
+
+> [!IMPORTANT]
+> The parameters listed below are optional, but at least one is required.
+> You can use these to update specific elements of your workshop item.
+
+| Argument                | Description                                                                                                                                                                                                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--description path`    | Path to a text file which holds the description. The description uses [BBCode](https://pzwiki.net/wiki/BBCode).                                                                                                                                                                                               |
+| `--preview path`        | Path to a preview image or gif to upload of suggested format JPG/PNG/GIF. File size limit of 1 MiB.                                                                                                                                                                                                           |
+| `--content path`        | Path to the folder of the content to upload.                                                                                                                                                                                                                                                                  |
+| `--title title`         | Title of the workshop item.                                                                                                                                                                                                                                                                                   |
+| `--visibility num`      | Visibility of the item on the workshop:<br/>`0` - Public (default)<br/>`1` - Friends Only<br/>`2` - Private/Hidden<br/>`3` - Unlisted                                                                                                                                                                         |
+| `--tags tag1,tag2,tag3` | A comma-separated list of tags to apply for the workshop item. The tag list will be cleared if this is empty (specified by `--tags ""`).<br/>Only the tags predefined by the developers should be used. Find the list of tags on the game's workshop page via the "Browse By Tags" section on the right side. |
+| `--new`                 | Creates a new workshop item and thus a new workshop ID which is used to update other fields (description, preview, etc).<br/>This parameter can be called alone which will create an empty Workshop item without anything on the Workshop page which is hidden by default.                                    |
+
+> [!NOTE]
+> The parameters listed below are optional.
+
+| Argument                  | Description                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--patchNote path`        | Path to a text file which holds the patch note of the update. This is supposedly only needed if you upload new content. The patch note uses [BBCode](https://pzwiki.net/wiki/BBCode).                                                                                                                                                       |
+| `--language languageCode` | Specify the target workshop language for the title and description of this upload by using the correct [API language code](https://partner.steamgames.com/doc/store/localization/languages).<br/>By default, it is set to `english`.<br/>Steam supports different languages for workshop pages based on the viewer's language set in Steam. |
+| `--update`                | Updates the application to the latest release version.                                                                                                                                                                                                                                                                                      |
+
+## Examples
+
+Consider a workshop item `123456789` for Project Zomboid (appid 108600) that follows Project Zomboid's [mod structure](https://pzwiki.net/wiki/Mod_structure)).
+Most of these examples have Linux paths. The content example has both Windows and Linux paths to refer to if you need help.
+
+> [!NOTE]
+> These examples assume the cachedir is default. If the cachedir is set to a different path, update the examples accordingly.
+
+### Updating the content
+
+To update the content of your mod while on Windows:
+
+```bash
+SteamUploader -a 108600 -w 123456789 -c %USERPROFILE%\Zomboid\Workshop\ExampleMod\Contents
+```
+
+And similarly for Linux:
+
+```bash
+./SteamUploader -a 108600 -w 123456789 -c ~/Zomboid/Workshop/ExampleMod/Contents
+```
+
+### Updating the preview image
+
+To update the preview of your mod with a gif (or other image formats):
+
+```bash
+./SteamUploader -a 108600 -w 123456789 -p ~/Workshop/ExampleMod/preview.gif
+```
+
+### Updating the description
+
+To update the description of your mod, you need to create a text file which holds the description in [BBCode](https://pzwiki.net/wiki/BBCode):
+
+```bash
+./SteamUploader -a 108600 -w 123456789 -d "~/Zomboid/Workshop/Path with space/description.txt"
+```
+
+### Updating the tags
+
+To set the tags to "Audio" and "Build 42" (Project Zomboid's specific Workshop tags):
+
+```bash
+./SteamUploader -a 108600 -w 123456789 -T "Animals,Build 42"
+```
+
+### Updating multiple things at once
+
+You can combine multiple arguments at once to update different things in a single command:
+
+```bash
+./SteamUploader -a 108600 -w 123456789 -c ~/Zomboid/Workshop/ExampleMod/Contents -p ~/Zomboid/Workshop/ExampleMod/preview.gif -T "Animals,Build 42"
+```
+
+---
+
+## Building
+
+> [!IMPORTANT]
+> x86 architecture is NOT supported!
+
+> [!IMPORTANT]
+> MSVC toolchain is NOT supported! Use mingw64 if on Windows.
+
+The only external dependency that is required to be manually installed is curl.
+
+Windows users should install [curl for Windows](https://curl.se/windows/).
+Linux users need to add the corresponding libcurl package via the system's package manager.
 
 Building in release mode:
 
 ```sh
-cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
+cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-## Uploading
-To use the tool, make sure Steam is launched and use a command-line interpreter (CLI).
-1. Open the CLI in the folder. This can be done with two ways:
-    - On Windows, in the file explorer top bar with the full path of the folder you're in, you can type `cmd` to open the CLI inside this folder.
-    - On Windows 11, in the file explorer, you can right click the background of a folder and select "Open in terminal"
-    - On Windows, you can open a terminal by searching for the application `cmd`.
-    - Use the following command to go in the folder:
-```bash
-cd path/to/app
-```
-For paths with spaces, make sure to put them in between quote marks `"`.
-2. Use the application by calling it with the various arguments key-value pairs:
-- Windows:
-```bash
-app.exe -k value # short key version
-app.exe --key value # long key version
-app.exe --appID appid --workshopID id -p preview # multiple keys
-```
-- Linux, same thing but instead call the app by doing:
-```bash
-./app #...
-```
+This tool is confirmed working on:
 
-## Arguments
-Below is the list of <span style="color: red">mandatory</span> arguments to pass.
-| Name | Arg (long) | Arg (short) | Description |
-|--|--|--|--|
-| AppID | <code>-a <span style="color:#0074D9">appID</span></code> | <code>--appID <span style="color:#0074D9">appID</span></code> | The [App ID](https://pzwiki.net/wiki/App_ID) for your game. |
-| WorkshopID | <code>-w <span style="color:#0074D9">workshopID</span></code> | <code>--workshopID <span style="color:#0074D9">workshopID</span></code> | The [workshop ID](https://pzwiki.net/wiki/Workshop_ID) of your item. This parameter is overwritten by using `--new`. |
-
-Below is a list of arguments you can use to update specific elements of your workshop item. At least one needs to be used up to as many you want.
-| Name | Arg (long) | Arg (short) | Description |
-|--|--|--|--|
-| Description | <code>-d <span style="color:red">path</span></code> | <code>--description <span style="color:red">path</span></code> | <span style="color:red">Path</span> to a text file which holds the description. The description uses [BBCode](https://pzwiki.net/wiki/BBCode). |
-| Preview | <code>-p <span style="color:red">path</span></code> | <code>--preview <span style="color:red">path</span></code> | <span style="color:red">Path</span> to the preview image or gif to upload. Suggested formats include JPG, PNG and GIF and there seems to be no limitations regarding the dimensions of the preview but the file size needs to be lower than 1 MB. |
-| Content | <code>-c <span style="color:red">path</span></code> | <code>--content <span style="color:red">path</span></code> | <span style="color:red">Path</span> to the folder of the content to upload. |
-| Title | <code>-t <span style="color:red">title</span></code> | <code>--title <span style="color:red">title</span></code> | <span style="color:red">Title</span> of workshop item. |
-| Visibility | <code>-v <span style="color:red">int</span></code> | <code>--visibility <span style="color:red">int</span></code> | Visibility of the item on the workshop: <ul> <li><code><span style="color:red">0</span></code> for public visibility (default),</li> <li><code><span style="color:red">1</span></code> for friends-only visibility,</li> <li><code><span style="color:red">2</span></code> for private (hidden) visibility.</li> <li><code><span style="color:red">3</span></code> for unlisted visibility.</li> </ul> |
-| Tags | <code>-T <span style="color:red">tag1,tag2,...,tagN</span></code> | <code>--tags <span style="color:red">tag1,tag2,...,tagN</span></code> | Used to set the <span style="color:red">tags</span> of the Workshop item. These are predefined by the developers of the game and thus only those should be used. You can find the list of tags in the main Workshop page of the game on the right under "Browse By Tags". Tags need to be separated by `,`. <BR><BR> This list can also be empty by doing `--tags ""` which will remove every tags. |
-| New workshop item | <code>-n</code> | <code>--new</code> | Creates a <span style="color:red">new</span> Workshop item and thus a new Workshop ID which will be used to update the other fields (description, preview etc). <BR><BR> This parameter can be called alone which will create an empty Workshop item without anything on the Workshop page which is hidden by default. |
-
-Below are optional parameters:
-| Name | Arg (long) | Arg (short) | Description |
-|--|--|--|--|
-| Patch note | <code>-P <span style="color:green">path</span></code> | <code>--patchNote <span style="color:green">path</span></code> | <span style="color:green">Path</span> to a text file which holds the patch note of the update. This is supposedly only needed if you upload new content. The patch note uses [BBCode](https://pzwiki.net/wiki/BBCode). |
-| Language | <code>-L <span style="color:green">languageCode</span></code> | <code>--language <span style="color:green">languageCode</span></code> | Specify the targeted language for the description and title of this specific upload by indicating the [API language code](https://partner.steamgames.com/doc/store/localization/languages). By default uses <code><span style="color:green">english</span></code>. <BR><BR> Steam is able to render a different description and title based on the user's Steam app language, giving the modders the ability to provide a translated translation for multiple language. |
-| Update application | <code>-U</code> | <code>--update</code> | Force updates the application to the last version. |
-
-## Auto-updater
-The application detects whenever a more recent version of the Steam Uploader exists and logs a message in the console. You can use `-U` or `--update` as command arguments to automatically download the update. 
-
-In Linux, this is done smoothly but in Windows this creates a bash files which runs and triggers the update once the application exits, opening a secondary command line interpreter.
-
-## Examples
-For these examples, consider the Workshop ID `123456789`, a user name `user` on the computer and using the Project Zomboid's [mod structure](https://pzwiki.net/wiki/Mod_structure) (appID: 108600).
-
-### Updating the content
-To update the content of your mod while on Windows:
-```bash
-app-windows-latest -a 108600 -w 123456789 -c C:\Users\user\Zomboid\Workshop\ExampleMod\Contents
-```
-For Linux
-```bash
-./app-windows-latest -a 108600 -w 123456789 -c /home/user/Zomboid/Workshop/ExampleMod/Contents
-```
-
-### Updating the preview image
-To update the preview of your mod with a gif (or other image formats):
-```bash
-./app-windows-latest -a 108600 -w 123456789 -p /home/user/Zomboid/Workshop/ExampleMod/preview.gif
-```
-
-### Updating the description
-To update the description of your mod, you need to create a text file which holds the description in [BBCode](https://pzwiki.net/wiki/BBCode):
-```bash
-./app-windows-latest -a 108600 -w 123456789 -d "/home/user/Zomboid/Workshop/Path with space for example/description.txt"
-```
-
-### Updating the tags
-To set the tags to "Audio" and "Build 42" (Project Zomboid's specific Workshop tags):
-```bash
-./app-windows-latest -a 108600 -w 123456789 -T "Animals,Build 42"
-```
-
-### Updating multiple things at once
-You can combine multiple arguments at once to update different things in a single command:
-```bash
-./app-windows-latest -a 108600 -w 123456789 -c /home/user/Zomboid/Workshop/ExampleMod/Contents -p /home/user/Zomboid/Workshop/ExampleMod/preview.gif -T "Animals,Build 42"
-```
-
-## Details
-Tool was confirmed working on:
 - Linux Mint 22.1 x86_64 (Kernel: 6.8.0-71-generic; Shell: bash 5.2.21)
-- Windows 10 Pro 22H2
+- Windows 10 22H2
 - Windows 11 24H2
 
-Built with the [Steamworks SDK v1.62](https://partner.steamgames.com/doc/sdk).
+Built with the [Steamworks SDK](https://partner.steamgames.com/doc/sdk) v1.62.
 
 ## Contact
-The tool was created by me (discord: sirdoggyjvla) for the Project Zomboid modding community. You can find us on the [Unofficial Modding Discord](https://pzwiki.net/wiki/Unofficial_Modding_Discord) of Project Zomboid.
+
+The tool was created by me (discord: sirdoggyjvla) for the Project Zomboid modding community.
+You can find us on the [Unofficial Modding Discord](https://pzwiki.net/wiki/Unofficial_Modding_Discord) of Project Zomboid.
