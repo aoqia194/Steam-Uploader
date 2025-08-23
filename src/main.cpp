@@ -61,7 +61,10 @@ int main(const int argc, const char *argv[])
             "Path to the folder containing the content to upload.",
             cxxopts::value<std::filesystem::path>()
         )
-        ("t,title", "Title of the UGC item.")
+        (
+            "t,title",
+            "Title of the UGC item."
+        )
         (
             "v,visibility",
             "Visibility of the item on the workshop. Defaults to public visibility."
@@ -96,7 +99,7 @@ int main(const int argc, const char *argv[])
     const auto opts = options.parse(argc, argv);
     // clang-format on
 
-    if (opts.count("help")) {
+    if (opts.count("help") || opts.count("appID") <= 0 || opts.count("workshopID") <= 0) {
         spdlog::info(options.help());
         return 0;
     }
@@ -105,9 +108,20 @@ int main(const int argc, const char *argv[])
         spdlog::set_level(spdlog::level::trace);
     }
 
-    const std::string latest_version = fetch_latest_version();
-    if (!latest_version.empty() && latest_version != PROJECT_VERSION) {
-        spdlog::warn("A new version ({}) is available!", latest_version);
+    const std::string latestVersion = fetch_latest_version();
+    int latestMaj, latestMin, latestPatch = -1;
+    {
+        std::stringstream ss(latestVersion);
+        char sep;
+        ss >> latestMaj >> sep >> latestMin >> sep >> latestPatch;
+    }
+
+    if (!latestVersion.empty() && latestVersion != PROJECT_VERSION &&
+        (latestMaj != -1 && latestMin != -1 && latestPatch != -1) &&
+        (latestMaj > PROJECT_VERSION_MAJOR || latestMin > PROJECT_VERSION_MINOR ||
+            latestPatch > PROJECT_VERSION_PATCH))
+    {
+        spdlog::warn("A new version ({}) is available!", latestVersion);
 
         if (opts.count("update") > 0) {
             perform_update();

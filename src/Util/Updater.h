@@ -5,7 +5,6 @@
 #include "spdlog/spdlog.h"
 
 #include <fstream>
-#include <iostream>
 #include <string>
 
 // Helper function for libcurl to write response to a string
