@@ -6,6 +6,14 @@
 A CLI tool to update items on the Steam Workshop independently from the game.
 Most workshop features are supported, but more are on their way!
 
+This tool is confirmed working on:
+
+- Linux Mint 22.1 x86_64 (Kernel: 6.8.0-71-generic; Shell: bash 5.2.21)
+- Windows 10 22H2
+- Windows 11 24H2
+
+Built with the [Steamworks SDK](https://partner.steamgames.com/doc/sdk) v1.62.
+
 ---
 
 ## Usage
@@ -137,24 +145,22 @@ You can combine multiple arguments at once to update different things in a singl
 > MSVC toolchain is NOT supported! Use mingw64 if on Windows.
 
 The only external dependency that is required to be manually installed is curl.
-
 Windows users should install [curl for Windows](https://curl.se/windows/).
 Linux users need to add the corresponding libcurl package via the system's package manager.
 
 Building in release mode:
 
-```sh
+```shell
 cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-This tool is confirmed working on:
+Generating distribution archives is done via:
 
-- Linux Mint 22.1 x86_64 (Kernel: 6.8.0-71-generic; Shell: bash 5.2.21)
-- Windows 10 22H2
-- Windows 11 24H2
-
-Built with the [Steamworks SDK](https://partner.steamgames.com/doc/sdk) v1.62.
+```shell
+cd build
+cpack -G ZIP -C Release
+```
 
 ## Contact
 
