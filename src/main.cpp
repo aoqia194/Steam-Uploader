@@ -41,8 +41,12 @@ int main(const int argc, const char *argv[])
         ("verbose", "Enables verbose logging.")
         ("U,update", "Force update SteamUploader to the latest version.");
     options.add_options("UGC")
-        ("a,appID", "App ID of the game", cxxopts::value<AppId_t>())
-        ("w,workshopID", "Workshop ID of the item. Overwritten by --new", cxxopts::value<PublishedFileId_t>());
+        ("a,appID", "App ID of the game", cxxopts::value<AppId_t>()->default_value("0"))
+        (
+            "w,workshopID",
+            "Workshop ID of the item. Overwritten by --new",
+            cxxopts::value<PublishedFileId_t>()
+        );
     options.add_options("Uploader")
         (
             "d,description",
@@ -63,7 +67,8 @@ int main(const int argc, const char *argv[])
         )
         (
             "t,title",
-            "Title of the UGC item."
+            "Title of the UGC item.",
+            cxxopts::value<std::string>()
         )
         (
             "v,visibility",
@@ -103,7 +108,7 @@ int main(const int argc, const char *argv[])
     if (opts.count("help") || opts.count("appID") <= 0 ||
         (opts.count("workshopID") <= 0 && !createNewUgc))
     {
-        spdlog::info(options.help());
+        spdlog::info(options.help({"", "UGC", "Uploader"}));
         return 0;
     }
 
@@ -135,7 +140,7 @@ int main(const int argc, const char *argv[])
     }
 
     const auto appID = opts["appID"].as<AppId_t>();
-    const auto workshopID = opts["workshopID"].as<PublishedFileId_t>();
+    const auto workshopID = opts["workshopID"].as_optional<PublishedFileId_t>();
 
     const auto descriptionPath = opts["description"].as_optional<std::filesystem::path>();
     const auto previewPath = opts["preview"].as_optional<std::filesystem::path>();
@@ -150,16 +155,22 @@ int main(const int argc, const char *argv[])
     // If at least one required param doesn't exist, raise an error and exit.
     if (!anyHasValue(descriptionPath, previewPath, contentPath, title, visibility, tags)) {
         if (createNewUgc) {
-            const Uploader uploader(workshopID, appID, createNewUgc);
+            const Uploader uploader(workshopID.value_or(k_PublishedFileIdInvalid), appID,
+                createNewUgc);
             return 0;
         }
 
         spdlog::error("All required arguments are empty -- there is nothing to upload.");
-        return 1;
+        return 0;
+    }
+
+    if (!workshopID.has_value()) {
+        spdlog::error("Workshop ID must be specified if --new is not used.");
+        return 0;
     }
 
     // Upload the item.
-    Uploader uploader(workshopID, appID, createNewUgc);
+    Uploader uploader(workshopID.value(), appID, createNewUgc);
     return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, tags,
         patchNotePath, language);
 }
