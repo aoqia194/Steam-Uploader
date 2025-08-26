@@ -30,8 +30,8 @@ Uploader::Uploader(PublishedFileId_t workshopID, const AppId_t appID, const bool
     if (createNewUgc) {
         // catch user possibly doing wrong usage if they gave a wID and try to create a
         // new item
-        if (workshopID != 0) {
-            spdlog::error("Warning: You provided a workshopID {} while creating a new item but "
+        if (workshopID != k_PublishedFileIdInvalid) {
+            spdlog::error("Warning: You provided workshopID {} while creating a new item but "
                           "this ID will be ignored since a new one is created instead.",
                 workshopID);
         }
@@ -333,7 +333,7 @@ void Uploader::CreateWorkshopItem()
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         // stop when the new workshop ID got set
-        if (this->m_workshopID != 0) {
+        if (this->m_workshopID != k_PublishedFileIdInvalid) {
             break;
         }
     }
