@@ -104,9 +104,8 @@ int main(const int argc, const char *argv[])
     const auto opts = options.parse(argc, argv);
     // clang-format on
 
-    const auto createNewUgc = opts["new"].as<bool>();
     if (opts.count("help") || opts.count("appID") <= 0 ||
-        (opts.count("workshopID") <= 0 && !createNewUgc))
+        (opts.count("workshopID") <= 0 && opts.count("new") <= 0))
     {
         spdlog::info(options.help({"", "UGC", "Uploader"}));
         return 0;
@@ -149,6 +148,7 @@ int main(const int argc, const char *argv[])
     const auto visibility = opts["visibility"].as_optional<int8_t>();
     const auto tags = opts["tags"].as_optional<std::vector<std::string>>();
 
+    const auto createNewUgc = opts["new"].as<bool>();
     const auto patchNotePath = opts["patchNote"].as_optional<std::filesystem::path>();
     const auto language = opts["language"].as<std::string>();
 
