@@ -14,9 +14,11 @@ class Uploader
 public:
     Uploader(PublishedFileId_t workshopID, AppId_t appID, bool createNewUgc);
 
-    int UpdateItem(const std::optional<fs::path>& descriptionPath, const std::optional<fs::path>& previewPath, const std::optional<fs::path> &contentPath, const std::optional<std::string>& title,
-        std::optional<int8_t> visibility, const std::optional<std::vector<std::string>>& tags,
-        const std::optional<fs::path> &patchNotePath, const std::optional<std::string>& language);
+    int UpdateItem(const std::optional<fs::path> &descriptionPath,
+        const std::optional<fs::path> &previewPath, const std::optional<fs::path> &contentPath,
+        const std::optional<std::string> &title, std::optional<int8_t> visibility,
+        const std::optional<std::vector<std::string>> &tags,
+        const std::optional<fs::path> &patchNotePath, const std::optional<std::string> &language);
 
     bool InitSteamAPI();
     static bool ShutdownSteamAPI();
