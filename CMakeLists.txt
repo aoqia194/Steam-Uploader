@@ -47,7 +47,7 @@ add_executable("${CMAKE_PROJECT_NAME}" ${SOURCES}
         src/Util/WarningHook.cpp
         src/Util/WarningHook.h
 )
-target_compile_features("${CMAKE_PROJECT_NAME}" PRIVATE cxx_std_26)
+target_compile_features("${CMAKE_PROJECT_NAME}" PRIVATE cxx_std_23)
 target_compile_definitions("${CMAKE_PROJECT_NAME}" PRIVATE
         PROJECT_NAME="${SteamUploader_NAME}"
         PROJECT_DESCRIPTION="${SteamUploader_DESC}"
