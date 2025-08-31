@@ -74,7 +74,7 @@ int main(const int argc, const char *argv[])
             "v,visibility",
             "Visibility of the item on the workshop. Defaults to public visibility."
                 " [0 = public, 1 = friends-only, 2 = private/hidden, 3 = unlisted]",
-            cxxopts::value<int8_t>()->default_value("-1")
+            cxxopts::value<int8_t>()
         )
         (
             "T,tags",
@@ -152,25 +152,27 @@ int main(const int argc, const char *argv[])
     const auto patchNotePath = opts["patchNote"].as_optional<std::filesystem::path>();
     const auto language = opts["language"].as<std::string>();
 
-    // If at least one required param doesn't exist, raise an error and exit.
-    if (!anyHasValue(descriptionPath, previewPath, contentPath, title, visibility, tags)) {
-        if (createNewUgc) {
-            const Uploader uploader(workshopID.value_or(k_PublishedFileIdInvalid), appID,
-                createNewUgc);
+    bool anyParam = anyHasValue(descriptionPath, previewPath, contentPath, title, visibility, tags);
+
+    if (!createNewUgc) {
+        // no param given, skip
+        if (!anyParam) {
+            spdlog::error("All required arguments are empty -- there is nothing to upload.");
+            return 0;
+
+        // no workshop ID given, skip
+        } else if (!workshopID.has_value()) {
+            spdlog::error("Workshop ID must be specified if --new is not used.");
             return 0;
         }
-
-        spdlog::error("All required arguments are empty -- there is nothing to upload.");
-        return 0;
     }
 
-    if (!workshopID.has_value()) {
-        spdlog::error("Workshop ID must be specified if --new is not used.");
-        return 0;
-    }
-
-    // Upload the item.
-    Uploader uploader(workshopID.value(), appID, createNewUgc);
-    return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, tags,
+    // Initialize the uploader
+    Uploader uploader(workshopID.value_or(k_PublishedFileIdInvalid), appID, createNewUgc);
+    // update parameters if needed
+    if (anyParam) {
+        return uploader.UpdateItem(descriptionPath, previewPath, contentPath, title, visibility, tags,
         patchNotePath, language);
+    }
+    return 0;
 }

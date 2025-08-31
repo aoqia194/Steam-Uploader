@@ -14,6 +14,7 @@
 
 // Uploader class implementation
 
+// constructor
 Uploader::Uploader(PublishedFileId_t workshopID, const AppId_t appID, const bool createNewUgc)
 {
     // appID is a mandatory argument.
@@ -24,7 +25,8 @@ Uploader::Uploader(PublishedFileId_t workshopID, const AppId_t appID, const bool
     this->m_appID = appID;
     setAppID(appID);
 
-    InitSteamAPI();
+    this->steamInit = InitSteamAPI();
+    if (!this->steamInit) { return; }
 
     // create new item if needed
     if (createNewUgc) {
@@ -40,7 +42,7 @@ Uploader::Uploader(PublishedFileId_t workshopID, const AppId_t appID, const bool
         CreateWorkshopItem();   // this will set workshopID to the newly created item
                                 // workshopID
 
-        // workshopID can't be 0 if no new item is being created
+    // workshopID can't be 0 if no new item is being created
     } else if (workshopID == 0) {
         spdlog::error("workshopID is a required argument. Either specify it, or use --new.");
         ShutdownSteamAPI();
@@ -50,9 +52,17 @@ Uploader::Uploader(PublishedFileId_t workshopID, const AppId_t appID, const bool
         this->m_workshopID = workshopID;
     }
 
-    // for use when setting everything up
-    this->m_isNew = createNewUgc;
+    // // for use when setting everything up
+    // this->m_isNew = createNewUgc;
 }
+
+// destructor
+Uploader::~Uploader() {
+    if (this->steamInit) {
+        ShutdownSteamAPI();
+    }
+}
+
 
 // initialize Steam API
 bool Uploader::InitSteamAPI()
@@ -76,7 +86,6 @@ bool Uploader::ShutdownSteamAPI()
     return true;
 }
 
-// TODO: Should probably split this up into multiple subfunctions, this function is massive!
 int Uploader::UpdateItem(const std::optional<fs::path> &descriptionPath,
     const std::optional<fs::path> &previewPath, const std::optional<fs::path> &contentPath,
     const std::optional<std::string> &title, const std::optional<int8_t> visibility,
@@ -114,8 +123,8 @@ int Uploader::UpdateItem(const std::optional<fs::path> &descriptionPath,
     }
 
     // Cleanup after update.
-    SteamAPI_RunCallbacks();
-    ShutdownSteamAPI();
+    // SteamAPI_RunCallbacks();
+
     return 0;
 }
 
@@ -164,7 +173,7 @@ bool Uploader::SetItemDescription(const UGCUpdateHandle_t handle,
         return false;
     }
 
-    const auto ret = SteamUGC()->SetItemDescription(handle, pathStr.c_str());
+    const auto ret = SteamUGC()->SetItemDescription(handle, description.c_str());
     if (!ret) {
         spdlog::error("Failed to set item description with status {}", ret);
     }

@@ -13,6 +13,7 @@ class Uploader
 {
 public:
     Uploader(PublishedFileId_t workshopID, AppId_t appID, bool createNewUgc);
+    ~Uploader();
 
     int UpdateItem(const std::optional<fs::path> &descriptionPath,
         const std::optional<fs::path> &previewPath, const std::optional<fs::path> &contentPath,
@@ -28,7 +29,8 @@ public:
 private:
     PublishedFileId_t m_workshopID;
     AppId_t m_appID;
-    bool m_isNew;
+    bool steamInit = false;
+    // bool m_isNew;
 
     //! Creates a new workshop item that defines the `m_workshopID` of the Uploader.
     void CreateWorkshopItem();
