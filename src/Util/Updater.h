@@ -128,11 +128,25 @@ inline void perform_update()
     std::system("start run_update.bat");
     exit(0);
 #else
-    if (std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str()) != 0) {}
-    if (std::system("unzip -o update.zip") != 0) {}
-    if (std::system(("mv -f " + exe_name + " " + exe_target).c_str()) != 0) {}
-    if (std::system(("mv -f " + so_name + " " + so_target).c_str()) != 0) {}
-    if (std::system("rm -f update.zip") != 0) {}
+    if (std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str()) != 0) {
+        spdlog::error("Failed to download update ZIP.");
+        return;
+    }
+    if (std::system("unzip -o update.zip") != 0) {
+        spdlog::error("Failed to unzip update file.");
+        return;
+    }
+    if (std::system(("mv -f " + exe_name + " " + exe_target).c_str()) != 0) {
+        spdlog::error("Failed to move updated executable.");
+        return;
+    }
+    if (std::system(("mv -f " + so_name + " " + so_target).c_str()) != 0) {
+        spdlog::error("Failed to move updated shared library.");
+        return;
+    }
+    if (std::system("rm -f update.zip") != 0) {
+        spdlog::warn("Failed to remove update.zip (non-critical).");
+    }
 #endif
 
     spdlog::info("Update complete!");
