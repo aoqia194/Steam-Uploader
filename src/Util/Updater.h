@@ -128,11 +128,11 @@ inline void perform_update()
     std::system("start run_update.bat");
     exit(0);
 #else
-    std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str());
-    std::system("unzip -o update.zip");
-    std::system(("mv -f " + exe_name + " " + exe_target).c_str());
-    std::system(("mv -f " + so_name + " " + so_target).c_str());
-    std::system("rm -f update.zip");
+    if (std::system(("curl -L -o update.zip \"" + zip_url + "\"").c_str()) != 0) {}
+    if (std::system("unzip -o update.zip") != 0) {}
+    if (std::system(("mv -f " + exe_name + " " + exe_target).c_str()) != 0) {}
+    if (std::system(("mv -f " + so_name + " " + so_target).c_str()) != 0) {}
+    if (std::system("rm -f update.zip") != 0) {}
 #endif
 
     spdlog::info("Update complete!");
