@@ -15,28 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-
-      # Linux build with CMake
+      # Get dependencies
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y g++ cmake zip libcurl4-openssl-dev nlohmann-json3-dev
 
-      - name: Configure CMake (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cmake -S . -B build
-
-      - name: Build (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cmake --build build --config Release
-          mv build/app app
-          mv SteamAPI/linux64/libsteam_api.so libsteam_api.so
-          zip -r app-${{ matrix.os }}.zip app libsteam_api.so
-
-      # Windows build with CMake
       - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
@@ -45,22 +30,17 @@ jobs:
           choco install zip -y
           choco install mingw -y
 
-      - name: Configure CMake (Windows)
-        if: matrix.os == 'windows-latest'
+
+      # Build any OS
+      - name: Build
         shell: bash
         run: |
-          cmake -S . -B build -G "MinGW Makefiles"
+          cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
+          cmake --build build
 
-      - name: Build (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
+      - name: Move and zip built files
         run: |
-          cmake --build build --config Release
-          mv build/app.exe app.exe
-          mv SteamAPI/win64/steam_api64.dll steam_api64.dll
-          zip -r app-${{ matrix.os }}.zip app.exe steam_api64.dll cacert.pem
-
-      # Upload build artifacts (unchanged)
+          zip -r app-${{ matrix.os }}.zip build/bin build/lib
 
       # Upload build artifacts
       - name: Upload build
