@@ -60,6 +60,7 @@ jobs:
           cp "$MINGW_BIN/libgcc_s_seh-1.dll" build/bin/ || true
 
       - name: Move and zip built files
+        shell: bash
         run: |
           mkdir -p release-files
           cp -r build/bin release-files/
