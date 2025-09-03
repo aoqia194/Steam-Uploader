@@ -67,6 +67,7 @@ jobs:
           zip -j app-${{ matrix.os }}.zip *
 
       - name: Move and zip built files for Linux
+        if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
           mv build/lib/libspdlog.so.1.15 build/bin/libspdlog.so.1.15
