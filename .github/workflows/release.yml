@@ -61,7 +61,10 @@ jobs:
 
       - name: Move and zip built files
         run: |
-          zip -r app-${{ matrix.os }}.zip build/bin build/lib
+          mkdir -p release-files
+          cp -r build/bin release-files/
+          cp -r build/lib release-files/
+          zip -r app-${{ matrix.os }}.zip release-files/*
 
       # Upload build artifacts
       - name: Upload build
