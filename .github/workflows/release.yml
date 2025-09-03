@@ -51,7 +51,7 @@ jobs:
           if-no-files-found: error
 
       - name: Setup tmate session
-        if: success() || failure()
+        if: ${{ failure() }}
         uses: mxschmitt/action-tmate@v3
 
 
