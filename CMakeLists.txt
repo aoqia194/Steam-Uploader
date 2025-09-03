@@ -75,11 +75,18 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
 
 # Moves all of the dynamic libraries needed to the runtime output bin/ folder.
 if(WIN32)
-    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}> $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
-        COMMAND_EXPAND_LISTS
-    )
+        add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}> $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
+                COMMAND_EXPAND_LISTS
+        )
+elseif(UNIX AND NOT APPLE)
+        # Copy libsteam_api.so to the bin directory after build
+        add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${CMAKE_SOURCE_DIR}/packages/steam/redistributable_bin/linux64/libsteam_api.so"
+                        $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
+        )
 endif()
 
 # CPack install setup

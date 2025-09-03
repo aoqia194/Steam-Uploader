@@ -9,6 +9,7 @@
 !/include
 !/lib
 !/src
+!/packages
 
 !/.clang-format
 !/.clang-tidy
