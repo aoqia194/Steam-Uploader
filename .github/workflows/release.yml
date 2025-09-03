@@ -63,7 +63,9 @@ jobs:
         run: |
           mkdir -p release-files
           cp -r build/bin release-files/
-          cp -r build/lib release-files/
+          if [ -d build/lib ]; then
+            cp -r build/lib release-files/
+          fi
           zip -r app-${{ matrix.os }}.zip release-files/*
 
       # Upload build artifacts
