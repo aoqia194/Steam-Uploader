@@ -59,22 +59,26 @@ jobs:
           cp "$MINGW_BIN/libwinpthread-1.dll" build/bin/ || true
           cp "$MINGW_BIN/libgcc_s_seh-1.dll" build/bin/ || true
 
-      - name: Move and zip built files
+      - name: Move and zip built files for Windows
+        if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          mkdir -p release-files
-          cp -r build/bin release-files/
-          if [ -d build/lib ]; then
-            cp -r build/lib release-files/
-          fi
-          zip -r app-${{ matrix.os }}.zip release-files/*
+          cd build/bin
+          zip -j app-${{ matrix.os }}.zip *
+
+      - name: Move and zip built files for Linux
+        shell: bash
+        run: |
+          mv build/lib/libspdlog.so.1.15 build/bin/libspdlog.so.1.15
+          cd build/bin
+          zip -r app-${{ matrix.os }}.zip *
 
       # Upload build artifacts
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
           name: app-${{ matrix.os }}
-          path: app*.zip
+          path: build/bin/app*.zip
           if-no-files-found: error
 
       - name: Setup tmate session
