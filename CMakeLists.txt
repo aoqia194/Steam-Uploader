@@ -76,7 +76,7 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
 # Moves all of the dynamic libraries needed to the runtime output bin/ folder.
 if(WIN32)
         # Statically link libstdc++, libgcc, and winpthread
-        add_link_options(-static -static-libgcc -static-libstdc++ -static-libwinpthread)
+        target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -static-libwinpthread)
 
         add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
