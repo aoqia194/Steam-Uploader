@@ -29,25 +29,25 @@ jobs:
           choco install cmake -y
           choco install zip -y
           choco install mingw -y
-          git clone https://github.com/microsoft/vcpkg.git
-          ./vcpkg/bootstrap-vcpkg.bat
-          ./vcpkg/vcpkg install curl
+
+          curl -L -o curl-win64.zip "https://curl.se/windows/latest.cgi?p=win64-mingw.zip"
+          unzip curl-win64.zip -d curl-win64
+          # Copy curl libraries and includes to a known location
+          mkdir -p packages/curl
+          cp -r curl-win64/*/bin packages/curl/
+          cp -r curl-win64/*/lib packages/curl/
+          cp -r curl-win64/*/include packages/curl/
+
+          echo "${GITHUB_WORKSPACE}/packages/curl/bin" >> $GITHUB_PATH
+          echo "${GITHUB_WORKSPACE}/packages/curl/lib" >> $GITHUB_PATH
+          echo "${GITHUB_WORKSPACE}/packages/curl/include" >> $GITHUB_PATH
 
 
       # Build Linux
-      - name: Build Linux
-        if: matrix.os == 'ubuntu-latest'
+      - name: Build
         shell: bash
         run: |
           cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
-          cmake --build build
-
-      # Build Windows
-      - name: Build Windows
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build build
 
       - name: Copy MinGW DLLs (Windows)
