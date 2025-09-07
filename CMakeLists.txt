@@ -24,8 +24,13 @@ set(SteamUploader_DESC "A CLI tool to update UGC on the Steam workshop")
 set(SteamUploader_VERSION 0.6.0)
 set(SteamUploader_VENDOR "SirDoggyJvla")
 
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-set(BUILD_STATIC_LIBS ON)
+if(win32)
+        option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+        set(BUILD_STATIC_LIBS ON)
+else()
+        option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+        set(BUILD_STATIC_LIBS OFF)
+endif()
 set(BUILD_TESTING OFF)
 
 project(${SteamUploader_NAME} VERSION ${SteamUploader_VERSION} DESCRIPTION ${SteamUploader_DESC})
@@ -81,7 +86,9 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
         CURL::libcurl
         cxxopts
         spdlog)
-target_link_options("${CMAKE_PROJECT_NAME}" PRIVATE -static-libgcc -static-libstdc++ -static)
+if(win32)
+        target_link_options("${CMAKE_PROJECT_NAME}" PRIVATE -static-libgcc -static-libstdc++ -static)
+endif()
 
 # Moves all of the dynamic libraries needed to the runtime output bin/ folder.
 if(WIN32)
