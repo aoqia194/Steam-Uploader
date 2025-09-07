@@ -24,8 +24,8 @@ set(SteamUploader_DESC "A CLI tool to update UGC on the Steam workshop")
 set(SteamUploader_VERSION 0.6.0)
 set(SteamUploader_VENDOR "SirDoggyJvla")
 
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-set(BUILD_STATIC_LIBS OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+set(BUILD_STATIC_LIBS ON)
 set(BUILD_TESTING OFF)
 
 project(${SteamUploader_NAME} VERSION ${SteamUploader_VERSION} DESCRIPTION ${SteamUploader_DESC})
