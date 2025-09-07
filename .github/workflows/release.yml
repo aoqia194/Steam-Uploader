@@ -50,15 +50,6 @@ jobs:
           cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
           cmake --build build
 
-      - name: Copy MinGW DLLs (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          MINGW_BIN="/c/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin"
-          cp "$MINGW_BIN/libstdc++-6.dll" build/bin/ || true
-          cp "$MINGW_BIN/libwinpthread-1.dll" build/bin/ || true
-          cp "$MINGW_BIN/libgcc_s_seh-1.dll" build/bin/ || true
-
       - name: Move and zip built files for Windows
         if: matrix.os == 'windows-latest'
         shell: bash
