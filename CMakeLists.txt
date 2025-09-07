@@ -66,14 +66,14 @@ include(cpm/curl)
 include(cpm/steamworks_sdk)
 include(cpm/cxxopts)
 
-set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ ${CMAKE_CXX_STANDARD_LIBRARIES}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+# set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ ${CMAKE_CXX_STANDARD_LIBRARIES}")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 
-if(Win32)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,-lwinpthread")
-endif()
+# if(Win32)
+#         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,-lwinpthread")
+# endif()
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bdynamic")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bdynamic")
 
 target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
         steamworks_sdk
@@ -81,6 +81,7 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
         CURL::libcurl
         cxxopts
         spdlog)
+target_link_options("${CMAKE_PROJECT_NAME}" PRIVATE -static-libgcc -static-libstdc++ -static)
 
 # Moves all of the dynamic libraries needed to the runtime output bin/ folder.
 if(WIN32)
