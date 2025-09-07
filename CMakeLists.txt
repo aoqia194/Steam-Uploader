@@ -66,6 +66,15 @@ include(cpm/curl)
 include(cpm/steamworks_sdk)
 include(cpm/cxxopts)
 
+set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ ${CMAKE_CXX_STANDARD_LIBRARIES}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+
+if(Win32)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,-lwinpthread")
+endif()
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bdynamic")
+
 target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
         steamworks_sdk
         nlohmann_json
@@ -75,16 +84,12 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
 
 # Moves all of the dynamic libraries needed to the runtime output bin/ folder.
 if(WIN32)
-        # Statically link libstdc++ and libgcc
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive")
-
         add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}> $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
                 COMMAND_EXPAND_LISTS
         )
 elseif(UNIX AND NOT APPLE)
-        # Copy libsteam_api.so to the bin directory after build
         add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                         "${CMAKE_SOURCE_DIR}/packages/steam/redistributable_bin/linux64/libsteam_api.so"
