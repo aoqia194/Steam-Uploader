@@ -15,18 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Setup vcpkg
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: 'master'
-
       # Get dependencies
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ cmake ninja-build zip
+          sudo apt-get install -y g++ cmake ninja-build zip libcurl4-openssl-dev nlohmann-json3-dev
+          
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd ./vcpkg && ./bootstrap-vcpkg.sh
+          cd ..
 
       - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
@@ -37,13 +35,18 @@ jobs:
           choco install zip -y
           choco install mingw -y
 
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd ./vcpkg && ./bootstrap-vcpkg.bat
+          cd ..
+
       # Build
       - name: Build
         shell: bash
+        env:
+          VCPKG_ROOT: ./vcpkg
         run: |
-          cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+          cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
           cmake --build build
-
 
       # Move and zip built files
       - name: Move and zip built files for Windows
