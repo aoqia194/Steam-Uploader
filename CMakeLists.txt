@@ -73,7 +73,7 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
         cxxopts::cxxopts
         spdlog::spdlog
 )
-target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -static -static-libgcc -static-libstdc++)
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++)
 
 # Moves all of the dynamic libraries needed to the runtime output bin/ folder.
 if (WIN32)
