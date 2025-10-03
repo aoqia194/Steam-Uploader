@@ -43,7 +43,7 @@ jobs:
       - name: Build
         shell: bash
         env:
-          VCPKG_ROOT: ./vcpkg
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: |
           cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
           cmake --build build
