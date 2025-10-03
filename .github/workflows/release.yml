@@ -20,36 +20,26 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ cmake zip libcurl4-openssl-dev nlohmann-json3-dev
+          sudo apt-get install -y g++ cmake ninja-build zip libcurl4-openssl-dev nlohmann-json3-dev
 
       - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
           choco install cmake -y
+          choco install ninja -y
           choco install zip -y
           choco install mingw -y
 
-          curl -L -o curl-win64.zip "https://curl.se/windows/latest.cgi?p=win64-mingw.zip"
-          unzip curl-win64.zip -d curl-win64
-          # Copy curl libraries and includes to a known location
-          mkdir -p packages/curl
-          cp -r curl-win64/*/bin packages/curl/
-          cp -r curl-win64/*/lib packages/curl/
-          cp -r curl-win64/*/include packages/curl/
-
-          echo "${GITHUB_WORKSPACE}/packages/curl/bin" >> $GITHUB_PATH
-          echo "${GITHUB_WORKSPACE}/packages/curl/lib" >> $GITHUB_PATH
-          echo "${GITHUB_WORKSPACE}/packages/curl/include" >> $GITHUB_PATH
-
-
-      # Build Linux
+      # Build
       - name: Build
         shell: bash
         run: |
           cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
           cmake --build build
 
+
+      # Move and zip built files
       - name: Move and zip built files for Windows
         if: matrix.os == 'windows-latest'
         shell: bash
@@ -73,9 +63,9 @@ jobs:
           path: build/bin/app*.zip
           if-no-files-found: error
 
-      - name: Setup tmate session
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   if: ${{ failure() }}
+      #   uses: mxschmitt/action-tmate@v3
 
 
   release:
