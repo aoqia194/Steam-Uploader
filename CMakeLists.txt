@@ -55,6 +55,7 @@ target_compile_definitions("${CMAKE_PROJECT_NAME}" PRIVATE
         PROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
         PROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
         PROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+        SPDLOG_COMPILED_LIB
 )
 
 # Project dependencies
@@ -63,6 +64,11 @@ find_package(cxxopts CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(CURL REQUIRED)
+
+# Add threading support for spdlog on Windows
+if(WIN32)
+    find_package(Threads REQUIRED)
+endif()
 
 include(steamworks_sdk)
 
@@ -73,6 +79,11 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
         cxxopts::cxxopts
         spdlog::spdlog
 )
+
+# Link threading library on Windows if needed
+if(WIN32)
+    target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE Threads::Threads)
+endif()
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++)
 
 # Moves all of the dynamic libraries needed to the runtime output bin/ folder.
