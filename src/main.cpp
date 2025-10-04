@@ -1,4 +1,4 @@
-#include "Util/Updater.h"
+// #include "Util/Updater.h"
 
 #include "Uploader.h"
 
@@ -104,6 +104,34 @@ int main(const int argc, const char *argv[])
     const auto opts = options.parse(argc, argv);
     // clang-format on
 
+    // updater
+    const std::string latestVersion = fetch_latest_version();
+    int latestMaj, latestMin, latestPatch = -1;
+    {
+        std::stringstream ss(latestVersion);
+        char sep;
+        ss >> latestMaj >> sep >> latestMin >> sep >> latestPatch;
+    }
+
+    bool update = opts.count("update") > 0;
+    if (!latestVersion.empty() && latestVersion != PROJECT_VERSION &&
+        (latestMaj != -1 && latestMin != -1 && latestPatch != -1) &&
+        (latestMaj > PROJECT_VERSION_MAJOR || latestMin > PROJECT_VERSION_MINOR ||
+            latestPatch > PROJECT_VERSION_PATCH))
+    {
+        spdlog::warn("A new version ({}) is available!", latestVersion);
+
+        // if (!update) {
+            spdlog::warn("Run with -U/--update to update or download it from: https://github.com/sirdoggyjvla/Steam-Uploader/releases");
+        // }
+    }
+
+    // if (update) {
+    //     perform_update();
+    //     return 0;
+    // }
+
+    // show help and exit if no arguments given
     if (opts.count("help") || opts.count("appID") <= 0 ||
         (opts.count("workshopID") <= 0 && opts.count("new") <= 0))
     {
@@ -113,29 +141,6 @@ int main(const int argc, const char *argv[])
 
     if (opts.count("verbose")) {
         spdlog::set_level(spdlog::level::trace);
-    }
-
-    const std::string latestVersion = fetch_latest_version();
-    int latestMaj, latestMin, latestPatch = -1;
-    {
-        std::stringstream ss(latestVersion);
-        char sep;
-        ss >> latestMaj >> sep >> latestMin >> sep >> latestPatch;
-    }
-
-    if (!latestVersion.empty() && latestVersion != PROJECT_VERSION &&
-        (latestMaj != -1 && latestMin != -1 && latestPatch != -1) &&
-        (latestMaj > PROJECT_VERSION_MAJOR || latestMin > PROJECT_VERSION_MINOR ||
-            latestPatch > PROJECT_VERSION_PATCH))
-    {
-        spdlog::warn("A new version ({}) is available!", latestVersion);
-
-        if (opts.count("update") > 0) {
-            perform_update();
-            return 0;
-        }
-
-        spdlog::warn("Run with -U/--update to update.");
     }
 
     const auto appID = opts["appID"].as<AppId_t>();

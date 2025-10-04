@@ -49,15 +49,15 @@ inline void perform_update()
 
 // assets and exec names based on windows or linux
 #ifdef _WIN32
-    const std::string asset_name = "app-windows-latest.zip";
-    const std::string exe_name = "app-windows-latest.exe";
-    const std::string exe_target = "app-windows-latest.exe";
+    const std::string asset_name = "SteamUploader-windows-latest.zip";
+    const std::string exe_name = "update/SteamUploader-windows-latest.exe";
+    const std::string exe_target = "SteamUploader-windows-latest.exe";
     const std::string dll_name = "steam_api64.dll";
     const std::string dll_target = "steam_api64.dll";
 #else
-    const std::string asset_name = "app-ubuntu-latest.zip";
-    const std::string exe_name = "app-ubuntu-latest";
-    const std::string exe_target = "app-ubuntu-latest";
+    const std::string asset_name = "SteamUploader-ubuntu-latest.zip";
+    const std::string exe_name = "update/SteamUploader-ubuntu-latest";
+    const std::string exe_target = "SteamUploader-ubuntu-latest";
     const std::string so_name = "SteamAPI/linux64/libsteam_api.so";
     const std::string so_target = "SteamAPI/linux64/libsteam_api.so";
 #endif
