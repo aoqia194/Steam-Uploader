@@ -31,7 +31,6 @@ jobs:
         shell: bash
         run: |
           choco install cmake -y
-          choco install ninja -y
           choco install zip -y
           choco install mingw -y
 
