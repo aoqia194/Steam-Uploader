@@ -67,6 +67,8 @@ jobs:
             -I./packages/json/single_include \
             -I./packages/cxxopts/include \
             -L./packages/steam/redistributable_bin/win64 -lsteam_api64 \
+            -L./packages/lib -lcurl \
+            -lws2_32 -lwldap32 -lwinmm -lcrypt32 \
             -Wl,-rpath,'$ORIGIN/packages/steam/redistributable_bin/win64' \
             -static-libgcc -static-libstdc++ \
             -pthread \
