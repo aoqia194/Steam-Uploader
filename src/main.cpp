@@ -31,10 +31,7 @@ int main(const int argc, const char *argv[])
 {
     spdlog::set_default_logger(spdlog::stdout_color_mt(PROJECT_NAME));
     spdlog::set_pattern(LOGGER_PATTERN);
-#ifndef __MINGW32__
-    // Disable backtrace on MinGW due to linking issues
     spdlog::enable_backtrace(BACKTRACE_SIZE);
-#endif
     spdlog::set_level(spdlog::level::info);
 
     // clang-format off

@@ -83,8 +83,6 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
 # Link threading library on Windows if needed
 if(WIN32)
     target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE Threads::Threads)
-    # Add additional Windows libraries for spdlog backtrace functionality
-    target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE dbghelp)
 endif()
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++)
 
