@@ -1,4 +1,4 @@
-// #include "Util/Updater.h"
+#include "Util/Updater.h"
 
 #include "Uploader.h"
 

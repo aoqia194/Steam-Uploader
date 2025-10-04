@@ -91,7 +91,6 @@ If you need to view the short versions of these parameters, see the help page of
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--patchNote path`        | Path to a text file which holds the patch note of the update. This is supposedly only needed if you upload new content. The patch note uses [BBCode](https://pzwiki.net/wiki/BBCode).                                                                                                                                                       |
 | `--language languageCode` | Specify the target workshop language for the title and description of this upload by using the correct [API language code](https://partner.steamgames.com/doc/store/localization/languages).<br/>By default, it is set to `english`.<br/>Steam supports different languages for workshop pages based on the viewer's language set in Steam. |
-| `--update`                | Updates the application to the latest release version.                                                                                                                                                                                                                                                                                      |
 
 ## Examples
 
