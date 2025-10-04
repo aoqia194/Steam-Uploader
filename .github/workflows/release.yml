@@ -41,7 +41,12 @@ jobs:
           curl -L -o curl-win64.zip "https://curl.se/windows/dl-8.10.1_2/curl-8.10.1_2-win64-mingw.zip"
           unzip -q curl-win64.zip
           mv curl-8.10.1_2-win64-mingw curl-prebuilt
-          
+
+          # retrieve libwinpthread-1.dll
+          curl -L -o mingw-runtime.zip "https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev1/x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11-rev1.7z"
+          7z x mingw-runtime.zip -o./mingw-runtime
+          cp ./mingw-runtime/bin/libwinpthread-1.dll ./curl-prebuilt/bin/
+
           # Copy DLLs to packages/lib for easy access
           mkdir -p packages/dll
           cp curl-prebuilt/bin/*.dll packages/dll/ || true
