@@ -46,7 +46,7 @@ jobs:
           # cd ..
 
       # Build
-      - name: Build
+      - name: Build on Linux
         if: matrix.os == 'ubuntu-latest'
         shell: bash
         env:
@@ -86,24 +86,21 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          Set-Location build/bin
-          if (Test-Path "app-${{ matrix.os }}.zip") { Remove-Item "app-${{ matrix.os }}.zip" }
-          Compress-Archive -Path * -DestinationPath "app-${{ matrix.os }}.zip"
-          Get-ChildItem "app-${{ matrix.os }}.zip" | Select-Object Name, Length
+          Compress-Archive -Path build/bin/*, packages/steam/redistributable_bin/win64/steam_api64.dll -DestinationPath "SteamUploader-${{ matrix.os }}.zip"
 
       - name: Move and zip built files for Linux
         if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
           cd build/bin
-          zip -j app-${{ matrix.os }}.zip *
+          zip -j SteamUploader-${{ matrix.os }}.zip *
 
       # Upload build artifacts
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: app-${{ matrix.os }}
-          path: build/bin/app*.zip
+          name: SteamUploader-${{ matrix.os }}
+          path: build/bin/SteamUploader*.zip
           if-no-files-found: error
 
       # - name: Setup tmate session
