@@ -38,5 +38,5 @@ inline std::unordered_set<std::string> valid_languages = {
 
 inline bool IsValidSteamLanguageCode(const std::string &code)
 {
-    return valid_languages.contains(code);
+    return valid_languages.find(code) != valid_languages.end();
 }
