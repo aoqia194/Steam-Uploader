@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           choco install cmake -y
-          choco install zip -y
+          choco install ninja -y
           choco install mingw -y
 
           git clone https://github.com/Microsoft/vcpkg.git
@@ -50,10 +50,12 @@ jobs:
       # Move and zip built files
       - name: Move and zip built files for Windows
         if: matrix.os == 'windows-latest'
-        shell: bash
+        shell: powershell
         run: |
-          cd build/bin
-          zip -j app-${{ matrix.os }}.zip *
+          Set-Location build/bin
+          if (Test-Path "app-${{ matrix.os }}.zip") { Remove-Item "app-${{ matrix.os }}.zip" }
+          Compress-Archive -Path * -DestinationPath "app-${{ matrix.os }}.zip"
+          Get-ChildItem "app-${{ matrix.os }}.zip" | Select-Object Name, Length
 
       - name: Move and zip built files for Linux
         if: matrix.os == 'ubuntu-latest'
