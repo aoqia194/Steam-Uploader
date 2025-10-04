@@ -34,6 +34,7 @@ jobs:
           git clone https://github.com/gabime/spdlog
           git clone https://github.com/curl/curl
           git clone https://github.com/nlohmann/json
+          git clone https://github.com/jarro2783/cxxopts
           cd ..
         # choco install cmake -y
           # choco install mingw -y
@@ -64,6 +65,7 @@ jobs:
             -I./packages/spdlog/include \
             -I./packages/curl/include \
             -I./packages/json/single_include \
+            -I./packages/cxxopts/include \
             -L./packages/steam/redistributable_bin/win64 -lsteam_api64 \
             -Wl,-rpath,'$ORIGIN/packages/steam/redistributable_bin/win64' \
             -static-libgcc -static-libstdc++ -static \
