@@ -1,7 +1,8 @@
 # Everything ignored
-*/
-
 !/*.md
+
+build
+.ignore
 
 !/.github
 !/cmake

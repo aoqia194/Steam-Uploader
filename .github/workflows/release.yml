@@ -36,6 +36,8 @@ jobs:
           git clone https://github.com/nlohmann/json
           git clone https://github.com/jarro2783/cxxopts
           cd ..
+
+          choco install curl
         # choco install cmake -y
           # choco install mingw -y
 
@@ -67,7 +69,7 @@ jobs:
             -I./packages/json/single_include \
             -I./packages/cxxopts/include \
             -L./packages/steam/redistributable_bin/win64 -lsteam_api64 \
-            -L./packages/lib -lcurl \
+            -lcurl \
             -lws2_32 -lwldap32 -lwinmm -lcrypt32 \
             -Wl,-rpath,'$ORIGIN/packages/steam/redistributable_bin/win64' \
             -static-libgcc -static-libstdc++ \
