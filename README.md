@@ -155,6 +155,9 @@ Check out these projects below:
 
 ## Building
 
+> [!IMPORTANT]
+> This section may need updating. Currently the Windows CMake process isn't confirmed working and was ditched for release mode as it took us actual weeks to try and make it work, so it was ditched in favour of using v0.4.0 release process for Windows.
+
 > [!NOTE]
 > Using MSVC toolchain is not fully supported, use it at your own risk! MinGW is recommended on Windows, using the `x64-mingw-static` vcpkg triplet.
 
