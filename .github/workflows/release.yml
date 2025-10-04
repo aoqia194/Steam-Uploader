@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"   # Triggers only when you push a tag starting with "v"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,137 +15,43 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # For vcpkg if we decide to use it as a submodule. TODO:
+          # submodules: true
+          # Slows down checkout of sources and not needed most of the time.
+          fetch-depth: 0
 
-      # Get dependencies
-      - name: Install dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ cmake ninja-build zip libcurl4-openssl-dev nlohmann-json3-dev
-          
-          git clone https://github.com/Microsoft/vcpkg.git
-          cd ./vcpkg && ./bootstrap-vcpkg.sh
-          cd ..
+      # Installs CMake and Ninja build tools
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
 
-      - name: Install dependencies (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: List $RUNNER_WORKSPACE before vcpkg is setup
+        run: find $RUNNER_WORKSPACE
         shell: bash
-        run: |
-          cd ./packages
-          git clone https://github.com/gabime/spdlog
-          git clone https://github.com/curl/curl
-          git clone https://github.com/nlohmann/json
-          git clone https://github.com/jarro2783/cxxopts
-          cd ..
-          
-          # Download pre-built curl for Windows with DLLs
-          curl -L -o curl-win64.zip "https://curl.se/windows/dl-8.10.1_2/curl-8.10.1_2-win64-mingw.zip"
-          unzip -q curl-win64.zip
-          mv curl-8.10.1_2-win64-mingw curl-prebuilt
 
-          # retrieve libwinpthread-1.dll
-          curl -L -o mingw-runtime.7z "https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev1/x86_64-13.2.0-release-win32-seh-msvcrt-rt_v11-rev1.7z"
-          7z x mingw-runtime.7z -o./mingw-runtime
-          cp ./mingw-runtime/mingw64/bin/libwinpthread-1.dll ./curl-prebuilt/bin/
+      # Sets up vcpkg
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11.5
 
-          # Copy DLLs to packages/lib for easy access
-          mkdir -p packages/dll
-          cp curl-prebuilt/bin/*.dll packages/dll/ || true
+      # Run CMake (consumes CMakePreset.json and runs vcpkg to build pkgs
+      - name: Run CMake and vcpkg
+        uses: lukka/run-cmake@v10.8
+        with:
+          configurePreset: 'ninja-multi-vcpkg'
+          buildPreset: 'ninja-multi-vcpkg'
+          buildPresetAdditionalArgs: "['--config Release']"
+          testPreset: 'ninja-multi-vcpkg'
+          testPresetAdditionalArgs: "['--config Release']"
 
-        # choco install curl
-        # choco install cmake -y
-          # choco install mingw -y
-
-          # git clone https://github.com/Microsoft/vcpkg.git
-          # cd ./vcpkg && ./bootstrap-vcpkg.bat
-          # cd ..
-
-      # Build
-      - name: Build on Linux
-        if: matrix.os == 'ubuntu-latest'
+      # Pack build files using CPack
+      - name: Run CPack
+        run: cd build && cpack -G ZIP -C Release
         shell: bash
-        env:
-          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: |
-          cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
-          cmake --build build
-
-      # Windows build
-      - name: Build on Windows
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          mkdir -p build/bin
-          g++ -O2 $(find ./src -name '*.cpp') \
-            -o ./build/bin/SteamUploader.exe \
-            -I. \
-            -I./packages/steam/public \
-            -I./packages/spdlog/include \
-            -I./curl-prebuilt/include \
-            -I./packages/json/single_include \
-            -I./packages/cxxopts/include \
-            -L./packages/steam/redistributable_bin/win64 -lsteam_api64 \
-            -L./curl-prebuilt/lib -lcurl \
-            -lws2_32 -lwldap32 -lwinmm -lcrypt32 \
-            -Wl,-rpath,'$ORIGIN' \
-            -static-libgcc -static-libstdc++ \
-            -pthread \
-            -DPROJECT_NAME="\"SteamUploader\"" \
-            -DPROJECT_DESCRIPTION="\"A CLI tool to update UGC on the Steam workshop\"" \
-            -DPROJECT_VERSION="\"0.6.0\"" \
-            -DPROJECT_VERSION_MAJOR=0 \
-            -DPROJECT_VERSION_MINOR=6 \
-            -DPROJECT_VERSION_PATCH=0
-
-      # Move and zip built files
-      - name: Move and zip built files for Windows
-        if: matrix.os == 'windows-latest'
-        shell: powershell
-        run: |
-          # Copy all required DLLs to the build directory
-          Copy-Item "packages/steam/redistributable_bin/win64/steam_api64.dll" -Destination "build/bin/"
-          Copy-Item "curl-prebuilt/bin/*.dll" -Destination "build/bin/" -ErrorAction SilentlyContinue
-          
-          # List what files are being packaged
-          Write-Output "Files being packaged:"
-          Get-ChildItem "build/bin/" | Format-Table Name, Length
-          
-          # Create the zip with executable and all DLLs
-          Compress-Archive -Path "build/bin/*" -DestinationPath "build/bin/SteamUploader-${{ matrix.os }}.zip"
-
-      - name: Move and zip built files for Linux
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          cd build/bin
-          zip -j SteamUploader-${{ matrix.os }}.zip *
 
       # Upload build artifacts
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
           name: SteamUploader-${{ matrix.os }}
-          path: build/bin/SteamUploader*.zip
+          path: build/bin/SteamUploader-${{ matrix.os }}.zip
           if-no-files-found: error
-
-      # - name: Setup tmate session
-      #   if: ${{ failure() }}
-      #   uses: mxschmitt/action-tmate@v3
-
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: ./release-files
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./release-files/**/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
