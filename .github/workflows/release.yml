@@ -86,7 +86,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          Compress-Archive -Path build/bin/*, packages/steam/redistributable_bin/win64/steam_api64.dll -DestinationPath "SteamUploader-${{ matrix.os }}.zip"
+          Compress-Archive -Path SteamUploader.exe, packages/steam/redistributable_bin/win64/steam_api64.dll -DestinationPath "SteamUploader-${{ matrix.os }}.zip"
 
       - name: Move and zip built files for Linux
         if: matrix.os == 'ubuntu-latest'
