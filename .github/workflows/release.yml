@@ -36,6 +36,15 @@ jobs:
           git clone https://github.com/nlohmann/json
           git clone https://github.com/jarro2783/cxxopts
           cd ..
+          
+          # Download pre-built curl for Windows with DLLs
+          curl -L -o curl-win64.zip "https://curl.se/windows/dl-8.10.1_2/curl-8.10.1_2-win64-mingw.zip"
+          unzip -q curl-win64.zip
+          mv curl-8.10.1_2-win64-mingw curl-prebuilt
+          
+          # Copy DLLs to packages/lib for easy access
+          mkdir -p packages/dll
+          cp curl-prebuilt/bin/*.dll packages/dll/ || true
 
         # choco install curl
         # choco install cmake -y
@@ -66,13 +75,13 @@ jobs:
             -I. \
             -I./packages/steam/public \
             -I./packages/spdlog/include \
-            -I./packages/curl/include \
+            -I./curl-prebuilt/include \
             -I./packages/json/single_include \
             -I./packages/cxxopts/include \
             -L./packages/steam/redistributable_bin/win64 -lsteam_api64 \
-            -L./packages/lib -lcurl \
+            -L./curl-prebuilt/lib -lcurl \
             -lws2_32 -lwldap32 -lwinmm -lcrypt32 \
-            -Wl,-rpath,'$ORIGIN/packages/steam/redistributable_bin/win64' \
+            -Wl,-rpath,'$ORIGIN' \
             -static-libgcc -static-libstdc++ \
             -pthread \
             -DPROJECT_NAME="\"SteamUploader\"" \
@@ -87,7 +96,16 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          Compress-Archive -Path build/bin/SteamUploader.exe, packages/steam/redistributable_bin/win64/steam_api64.dll -DestinationPath "build/bin/SteamUploader-${{ matrix.os }}.zip"
+          # Copy all required DLLs to the build directory
+          Copy-Item "packages/steam/redistributable_bin/win64/steam_api64.dll" -Destination "build/bin/"
+          Copy-Item "curl-prebuilt/bin/*.dll" -Destination "build/bin/" -ErrorAction SilentlyContinue
+          
+          # List what files are being packaged
+          Write-Output "Files being packaged:"
+          Get-ChildItem "build/bin/" | Format-Table Name, Length
+          
+          # Create the zip with executable and all DLLs
+          Compress-Archive -Path "build/bin/*" -DestinationPath "build/bin/SteamUploader-${{ matrix.os }}.zip"
 
       - name: Move and zip built files for Linux
         if: matrix.os == 'ubuntu-latest'
