@@ -39,12 +39,32 @@ jobs:
 
       # Build
       - name: Build
+        if: matrix.os == 'ubuntu-latest'
         shell: bash
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: |
           cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
           cmake --build build
+
+      # Windows build
+      - name: Build on Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          g++ -g $(find ./src -name '*.cpp') \
+            -o ./SteamUploader.exe \
+            -I. \
+            -L./packages/steam/redistributable_bin/win64 -lsteam_api64 \
+            -Wl,-rpath,'$ORIGIN/packages/steam/redistributable_bin/win64' \
+            -static-libgcc -static-libstdc++ -static \
+            -pthread \
+            -DPROJECT_NAME="\"SteamUploader\"" \
+            -DPROJECT_DESCRIPTION="\"A CLI tool to update UGC on the Steam workshop\"" \
+            -DPROJECT_VERSION="\"0.6.0\"" \
+            -DPROJECT_VERSION_MAJOR=0 \
+            -DPROJECT_VERSION_MINOR=6 \
+            -DPROJECT_VERSION_PATCH=0
 
       # Move and zip built files
       - name: Move and zip built files for Windows
