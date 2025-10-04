@@ -261,7 +261,7 @@ bool Uploader::SetTags(const UGCUpdateHandle_t handle,
 
     std::vector<const char *> tagsCstr{};
     tagsCstr.resize(tags->size());
-    std::ranges::transform(tags->cbegin(), tags->cend(), tagsCstr.begin(), &std::string::c_str);
+    std::transform(tags->cbegin(), tags->cend(), tagsCstr.begin(), [](const std::string& s) { return s.c_str(); });
 
     SteamParamStringArray_t tagArray{};
     tagArray.m_ppStrings = tagsCstr.empty() ? nullptr : tagsCstr.data();
@@ -270,7 +270,7 @@ bool Uploader::SetTags(const UGCUpdateHandle_t handle,
     const auto ret = SteamUGC()->SetItemTags(handle, &tagArray);
     if (!ret) {
         std::ostringstream os;
-        std::ranges::copy(*tags, std::ostream_iterator<std::string>(os, ","));
+        std::copy(tags->begin(), tags->end(), std::ostream_iterator<std::string>(os, ","));
         spdlog::error("Failed to set item tags to {}", os.str());
     }
 
