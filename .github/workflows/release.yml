@@ -26,16 +26,21 @@ jobs:
           cd ./vcpkg && ./bootstrap-vcpkg.sh
           cd ..
 
-      # - name: Install dependencies (Windows)
-      #   if: matrix.os == 'windows-latest'
-      #   shell: bash
-      #   run: |
-      #     choco install cmake -y
-      #     choco install mingw -y
-
-      #     git clone https://github.com/Microsoft/vcpkg.git
-      #     cd ./vcpkg && ./bootstrap-vcpkg.bat
-      #     cd ..
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          # Install basic tools
+          choco install cmake -y
+          choco install mingw -y
+          
+          # Setup vcpkg for package management
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd ./vcpkg && ./bootstrap-vcpkg.bat
+          ./vcpkg install curl:x64-windows-static
+          ./vcpkg install spdlog:x64-windows-static
+          ./vcpkg install nlohmann-json:x64-windows-static
+          cd ..
 
       # Build
       - name: Build
@@ -55,7 +60,13 @@ jobs:
           g++ -g $(find ./src -name '*.cpp') \
             -o ./SteamUploader.exe \
             -I. \
-            -L./packages/steam/redistributable_bin/win64 -lsteam_api64 \
+            -I./packages/steam/public \
+            -I./vcpkg/installed/x64-windows-static/include \
+            -L./packages/steam/redistributable_bin/win64 \
+            -L./vcpkg/installed/x64-windows-static/lib \
+            -lsteam_api64 \
+            -lcurl \
+            -lspdlog \
             -Wl,-rpath,'$ORIGIN/packages/steam/redistributable_bin/win64' \
             -static-libgcc -static-libstdc++ -static \
             -pthread \
