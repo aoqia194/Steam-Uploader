@@ -149,6 +149,10 @@ You can combine multiple arguments at once to update different things in a singl
 
 ---
 
+## Projects using this app
+Check out these projects below:
+- https://github.com/xberkth/Steam-Uploader-Menu/
+
 ## Building
 
 > [!NOTE]
