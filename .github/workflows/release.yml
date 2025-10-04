@@ -60,9 +60,8 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
-          cp build/lib/libspdlog.so.1.15 build/bin/libspdlog.so.1.15
           cd build/bin
-          zip -r app-${{ matrix.os }}.zip *
+          zip -j app-${{ matrix.os }}.zip *
 
       # Upload build artifacts
       - name: Upload build
