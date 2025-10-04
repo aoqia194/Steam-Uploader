@@ -58,7 +58,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          g++ -g $(find ./src -name '*.cpp') \
+          g++ -O2 $(find ./src -name '*.cpp') \
             -o ./SteamUploader.exe \
             -I. \
             -I./packages/steam/public \
@@ -68,7 +68,7 @@ jobs:
             -I./packages/cxxopts/include \
             -L./packages/steam/redistributable_bin/win64 -lsteam_api64 \
             -Wl,-rpath,'$ORIGIN/packages/steam/redistributable_bin/win64' \
-            -static-libgcc -static-libstdc++ -static \
+            -static-libgcc -static-libstdc++ \
             -pthread \
             -DPROJECT_NAME="\"SteamUploader\"" \
             -DPROJECT_DESCRIPTION="\"A CLI tool to update UGC on the Steam workshop\"" \
