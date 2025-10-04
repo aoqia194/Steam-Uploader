@@ -60,8 +60,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
+          mkdir -p build/bin
           g++ -O2 $(find ./src -name '*.cpp') \
-            -o ./SteamUploader.exe \
+            -o ./build/bin/SteamUploader.exe \
             -I. \
             -I./packages/steam/public \
             -I./packages/spdlog/include \
@@ -86,7 +87,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
-          Compress-Archive -Path SteamUploader.exe, packages/steam/redistributable_bin/win64/steam_api64.dll -DestinationPath "SteamUploader-${{ matrix.os }}.zip"
+          Compress-Archive -Path build/bin/SteamUploader.exe, packages/steam/redistributable_bin/win64/steam_api64.dll -DestinationPath "build/bin/SteamUploader-${{ matrix.os }}.zip"
 
       - name: Move and zip built files for Linux
         if: matrix.os == 'ubuntu-latest'
