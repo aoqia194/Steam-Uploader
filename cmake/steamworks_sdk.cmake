@@ -13,7 +13,7 @@ else () # Commonly Darwin for mac
 endif ()
 
 # Use local Steamworks SDK directory
-set(steamworks_sdk_SOURCE_DIR "${CMAKE_SOURCE_DIR}/packages/steam")
+set(steamworks_sdk_SOURCE_DIR "${CMAKE_SOURCE_DIR}/vendor/steam")
 
 add_library(steamworks_sdk SHARED IMPORTED)
 
