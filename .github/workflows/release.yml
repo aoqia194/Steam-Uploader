@@ -17,15 +17,13 @@ jobs:
 
   release:
     needs: build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    # Build already outputs the multi-platform artifacts. This is only used just so the workflow runs.
+    runs-on: ubuntu-latest
     steps:
       - name: Fetch build output
         uses: actions/download-artifact@v4
         with:
-          name: build-output-${{ matrix.os }}
+          name: build-output
           path: build/
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
