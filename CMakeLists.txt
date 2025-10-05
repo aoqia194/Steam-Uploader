@@ -90,17 +90,17 @@ if (WIN32)
 elseif (UNIX AND NOT APPLE)
     add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/vendor/steam/redistributable_bin/linux64/libsteam_api.so"
+            "${CMAKE_SOURCE_DIR}/vendor/steam/redistributable_bin/${steamworks_sdk_OS_ARCH}/${steamworks_sdk_LIB_NAME}.${steamworks_sdk_LIB_EXT}"
             $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
     )
 endif ()
 
 # CPack install setup
 install(TARGETS ${CMAKE_PROJECT_NAME}
-        RUNTIME DESTINATION /
-        LIBRARY DESTINATION /
+        RUNTIME DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
 )
-install(FILES $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}> DESTINATION /)
+install(FILES $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}> DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 set(CPACK_PACKAGE_NAME ${SteamUploader_NAME})
 set(CPACK_PACKAGE_VERSION ${SteamUploader_VERSION})
