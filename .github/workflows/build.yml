@@ -48,9 +48,17 @@ jobs:
           # testPreset: 'all'
           # testPresetAdditionalArgs: "['--config Release']"
 
+      - name: List1 $RUNNER_WORKSPACE before cpack
+        run: find $RUNNER_WORKSPACE
+        shell: bash
+
       # Pack build files using CPack
       - name: Run CPack
         run: cd build/release && cpack -G ZIP -C Release
+        shell: bash
+
+      - name: List1 $RUNNER_WORKSPACE after cpakc
+        run: find $RUNNER_WORKSPACE
         shell: bash
 
       # Upload build artifacts for specific OS
