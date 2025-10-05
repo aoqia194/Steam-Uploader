@@ -52,9 +52,17 @@ jobs:
           # testPreset: 'all'
           # testPresetAdditionalArgs: "['--config Release']"
 
+      - name: List1 $RUNNER_WORKSPACE before vcpkg is setup
+        run: find $RUNNER_WORKSPACE
+        shell: bash
+
       # Pack build files using CPack
       - name: Run CPack
         run: cd build/release && cpack -G ZIP -C Release
+        shell: bash
+
+      - name: List2 $RUNNER_WORKSPACE before vcpkg is setup
+        run: find $RUNNER_WORKSPACE
         shell: bash
 
       # Upload build artifacts
