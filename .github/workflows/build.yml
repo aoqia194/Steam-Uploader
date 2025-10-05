@@ -51,7 +51,7 @@ jobs:
 
       # Pack build files using CPack
       - name: Run CPack
-        run: cd build && cpack -G ZIP -C Release
+        run: cd build/release && cpack -G ZIP -C Release
         shell: bash
 
       # Upload build artifacts
