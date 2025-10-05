@@ -1,12 +1,12 @@
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if (WIN32)
     set(steamworks_sdk_OS_ARCH "win64")
     set(steamworks_sdk_LIB_NAME "steam_api64")
     set(steamworks_sdk_LIB_EXT "dll")
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+elseif (UNIX AND NOT APPLE)
     set(steamworks_sdk_OS_ARCH "linux64")
     set(steamworks_sdk_LIB_NAME "libsteam_api")
     set(steamworks_sdk_LIB_EXT "so")
-else () # Commonly Darwin for mac
+else ()
     set(steamworks_sdk_OS_ARCH "osx")
     set(steamworks_sdk_LIB_NAME "libsteam_api")
     set(steamworks_sdk_LIB_EXT "dylib")
@@ -24,7 +24,7 @@ set_target_properties(steamworks_sdk PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${steamworks_sdk_SOURCE_DIR}/public"
 )
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if (WIN32)
     set_target_properties(steamworks_sdk PROPERTIES
             IMPORTED_IMPLIB "${steamworks_sdk_LIBDIR}/${steamworks_sdk_LIB_NAME}.lib"
     )
