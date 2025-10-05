@@ -32,7 +32,7 @@
     {
       "name": "debug",
       "displayName": "Debug",
-      "inherits": "common, force-windows-static",
+      "inherits": ["common", "force-windows-static"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -40,7 +40,7 @@
     {
       "name": "release",
       "displayName": "Release",
-      "inherits": "common, force-windows-static",
+      "inherits": ["common", "force-windows-static"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -68,6 +68,7 @@
     }
   ]
 }
+
 
 
 
