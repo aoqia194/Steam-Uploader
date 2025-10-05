@@ -23,8 +23,13 @@ set(SteamUploader_VERSION 0.6.0)
 set(SteamUploader_VENDOR "SirDoggyJvla")
 
 # CMake build variables
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-set(BUILD_STATIC_LIBS ON)
+if ($env{VCPKG_LIBRARY_LINKAGE} STREQUAL "static")
+        set(BUILD_SHARED_LIBS OFF)
+        set(BUILD_STATIC_LIBS ON)
+else ()
+        set(BUILD_SHARED_LIBS ON)
+        set(BUILD_STATIC_LIBS OFF)
+endif ()
 set(BUILD_TESTING OFF)
 
 project(${SteamUploader_NAME} VERSION ${SteamUploader_VERSION} DESCRIPTION ${SteamUploader_DESC})
