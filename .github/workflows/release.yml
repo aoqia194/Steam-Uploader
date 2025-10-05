@@ -23,13 +23,13 @@ jobs:
       - name: Fetch build output
         uses: actions/download-artifact@v4
         with:
-          name: build-output
+          name: build-output-${{ matrix.os }}
           path: dist/
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         # Only release when pushing a tag, just another safe-guard.
         if: github.ref_type == 'tag'
         with:
-          files: ./dist/*.zip
+          files: dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
