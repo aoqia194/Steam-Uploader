@@ -14,52 +14,52 @@ concurrency:
 
 jobs:
   build:
-      runs-on: ${{ matrix.os }}
-      strategy:
-        matrix:
-          os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
   
-      steps:
-        - uses: actions/checkout@v4
-          with:
-            # For vcpkg if we decide to use it as a submodule. TODO:
-            # submodules: true
-            # Slows down checkout of sources and not needed most of the time.
-            fetch-depth: 0
-  
-        # Installs CMake and Ninja build tools
-        - name: Install CMake and Ninja
-          uses: lukka/get-cmake@latest
-  
-        - name: List $RUNNER_WORKSPACE before vcpkg is setup
-          run: find $RUNNER_WORKSPACE
-          shell: bash
-  
-        # Sets up vcpkg
-        - name: Setup vcpkg
-          uses: lukka/run-vcpkg@v11.5
-  
-        # Run CMake (consumes CMakePreset.json and runs vcpkg to build pkgs
-        - name: Run CMake and vcpkg
-          uses: lukka/run-cmake@v10.8
-          with:
-            configurePreset: 'ninja-multi-vcpkg'
-            buildPreset: 'ninja-multi-vcpkg'
-            buildPresetAdditionalArgs: "['--config Release']"
-            testPreset: 'ninja-multi-vcpkg'
-            testPresetAdditionalArgs: "['--config Release']"
-  
-        # Pack build files using CPack
-        - name: Run CPack
-          run: cd build && cpack -G ZIP -C Release
-          shell: bash
-  
-        # Upload build artifacts
-        - name: Upload build
-          uses: actions/upload-artifact@v4
-          with:
-            name: build-output-${{ matrix.os }}
-            path: build/bin/SteamUploader-${{ matrix.os }}.zip
-            retention-days: 7
-            if-no-files-found: error
-            overwrite: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # For vcpkg if we decide to use it as a submodule. TODO:
+          # submodules: true
+          # Slows down checkout of sources and not needed most of the time.
+          fetch-depth: 0
+
+      # Installs CMake and Ninja build tools
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: List $RUNNER_WORKSPACE before vcpkg is setup
+        run: find $RUNNER_WORKSPACE
+        shell: bash
+
+      # Sets up vcpkg
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11.5
+
+      # Run CMake (consumes CMakePreset.json and runs vcpkg to build pkgs
+      - name: Run CMake and vcpkg
+        uses: lukka/run-cmake@v10.8
+        with:
+          configurePreset: 'ninja-multi-vcpkg'
+          buildPreset: 'ninja-multi-vcpkg'
+          buildPresetAdditionalArgs: "['--config Release']"
+          testPreset: 'ninja-multi-vcpkg'
+          testPresetAdditionalArgs: "['--config Release']"
+
+      # Pack build files using CPack
+      - name: Run CPack
+        run: cd build && cpack -G ZIP -C Release
+        shell: bash
+
+      # Upload build artifacts
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output-${{ matrix.os }}
+          path: build/bin/SteamUploader-${{ matrix.os }}.zip
+          retention-days: 7
+          if-no-files-found: error
+          overwrite: true
