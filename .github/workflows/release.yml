@@ -30,6 +30,6 @@ jobs:
         # Only release when pushing a tag, just another safe-guard.
         if: github.ref_type == 'tag'
         with:
-          files: ./dist
+          files: ./dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
