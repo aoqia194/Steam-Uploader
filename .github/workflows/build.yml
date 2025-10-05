@@ -49,9 +49,6 @@ jobs:
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11.5
 
-      - name: Prints output of run-vcpkg's action.
-        run: echo "root='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}', triplet='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_DEFAULT_TRIPLET_OUT }}' "
-
       # Run CMake (consumes CMakePreset.json and runs vcpkg to build pkgs
       - name: Run CMake and vcpkg
         uses: lukka/run-cmake@v10.8
