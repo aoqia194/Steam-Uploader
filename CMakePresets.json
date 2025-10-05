@@ -20,7 +20,7 @@
     {
       "name": "force-windows-static",
       "hidden": true,
-      "condition" {
+      "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
@@ -68,6 +68,7 @@
     }
   ]
 }
+
 
 
 
