@@ -20,7 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
   
     steps:
       - uses: actions/checkout@v4
@@ -33,10 +33,6 @@ jobs:
       # Installs CMake and Ninja build tools
       - name: Install CMake and Ninja
         uses: lukka/get-cmake@latest
-
-      - name: List $RUNNER_WORKSPACE before vcpkg is setup
-        run: find $RUNNER_WORKSPACE
-        shell: bash
 
       # Sets up vcpkg
       - name: Setup vcpkg
@@ -52,25 +48,17 @@ jobs:
           # testPreset: 'all'
           # testPresetAdditionalArgs: "['--config Release']"
 
-      - name: List1 $RUNNER_WORKSPACE before vcpkg is setup
-        run: find $RUNNER_WORKSPACE
-        shell: bash
-
       # Pack build files using CPack
       - name: Run CPack
         run: cd build/release && cpack -G ZIP -C Release
         shell: bash
 
-      - name: List2 $RUNNER_WORKSPACE before vcpkg is setup
-        run: find $RUNNER_WORKSPACE
-        shell: bash
-
-      # Upload build artifacts
+      # Upload build artifacts for specific OS
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: build-output-${{ matrix.os }}
-          path: dist/SteamUploader-${{ matrix.os }}.zip
+          name: build-output
+          path: dist/SteamUploader-*.zip
           retention-days: 7
           if-no-files-found: error
           overwrite: true
