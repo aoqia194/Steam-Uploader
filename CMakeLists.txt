@@ -90,7 +90,7 @@ if (WIN32)
 elseif (UNIX AND NOT APPLE)
     add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/packages/steam/redistributable_bin/linux64/libsteam_api.so"
+            "${CMAKE_SOURCE_DIR}/vendor/steam/redistributable_bin/linux64/libsteam_api.so"
             $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
     )
 endif ()

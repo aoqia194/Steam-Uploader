@@ -1,19 +1,18 @@
 # Everything ignored
-!/*.md
+/*
 
-build
-.ignore
+!/*.md
 
 !/.github
 !/cmake
-!/cmake/cpm
-!/include
-!/lib
 !/src
-!/packages
+!/vendor
 
 !/.clang-format
 !/.clang-tidy
 !/.gitignore
 !/CMakeLists.txt
+!/CMakePresets.json
 !/Enums.ods
+!/LICENSE
+!/vcpkg.json
