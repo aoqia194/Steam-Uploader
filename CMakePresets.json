@@ -13,13 +13,25 @@
         "generator": "Ninja",
         "binaryDir": "${sourceDir}/build/${presetName}",
         "cacheVariables": {
-          "VCPKG_LIBRARY_LINKAGE": "static"
+          "CMAKE_TOOLCHAIN_FILE": "${vcpkgRoot}/scripts/buildsystems/vcpkg.cmake"
         }
+    },
+    {
+      "name": "force-windows-static",
+      "hidden": true,
+      "condition" {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static"
+      }
     },
     {
       "name": "debug",
       "displayName": "Debug",
-      "inherits": "common",
+      "inherits": "common, force-windows-static",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -27,7 +39,7 @@
     {
       "name": "release",
       "displayName": "Release",
-      "inherits": "common",
+      "inherits": "common, force-windows-static",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -55,5 +67,6 @@
     }
   ]
 }
+
 
 
