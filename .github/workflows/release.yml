@@ -24,12 +24,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-output
-          path: build/
+          path: build/release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         # Only release when pushing a tag, just another safe-guard.
         if: github.ref_type == 'tag'
         with:
-          files: ./build
+          files: ./build/release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
