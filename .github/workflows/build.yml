@@ -43,11 +43,11 @@ jobs:
       - name: Run CMake and vcpkg
         uses: lukka/run-cmake@v10.8
         with:
-          configurePreset: 'ninja-multi-vcpkg'
-          buildPreset: 'ninja-multi-vcpkg'
-          buildPresetAdditionalArgs: "['--config Release']"
-          testPreset: 'ninja-multi-vcpkg'
-          testPresetAdditionalArgs: "['--config Release']"
+          configurePreset: 'release'
+          buildPreset: 'release'
+          # buildPresetAdditionalArgs: "['--config Release']"
+          # testPreset: 'all'
+          # testPresetAdditionalArgs: "['--config Release']"
 
       # Pack build files using CPack
       - name: Run CPack
