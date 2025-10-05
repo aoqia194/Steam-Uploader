@@ -62,6 +62,9 @@ jobs:
           # buildPresetAdditionalArgs: "['--config Release']"
           # testPreset: 'all'
           # testPresetAdditionalArgs: "['--config Release']"
+        env:
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
 
       - name: List1 $RUNNER_WORKSPACE before cpack
         run: find $RUNNER_WORKSPACE
