@@ -18,21 +18,9 @@
         }
     },
     {
-      "name": "force-windows-static",
-      "hidden": true,
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      },
-      "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static"
-      }
-    },
-    {
       "name": "debug",
       "displayName": "Debug",
-      "inherits": ["common", "force-windows-static"],
+      "inherits": ["common"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -40,7 +28,7 @@
     {
       "name": "release",
       "displayName": "Release",
-      "inherits": ["common", "force-windows-static"],
+      "inherits": ["common"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -68,6 +56,7 @@
     }
   ]
 }
+
 
 
 
