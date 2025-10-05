@@ -16,9 +16,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin")
 
-# Vcpkg toolchain file
-set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
-
 # Project details
 set(SteamUploader_NAME "SteamUploader")
 set(SteamUploader_DESC "A CLI tool to update UGC on the Steam workshop")
@@ -75,6 +72,12 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE
         spdlog::spdlog
 )
 
+if (WIN32)
+    target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -static)
+elseif (UNIX AND NOT APPLE)
+    target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++)
+endif ()
+
 # Moves all of the dynamic libraries needed to the runtime output bin/ folder.
 if (WIN32)
     add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
@@ -82,7 +85,7 @@ if (WIN32)
             $<TARGET_RUNTIME_DLLS:${CMAKE_PROJECT_NAME}> $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>
             COMMAND_EXPAND_LISTS
     )
-elseif (UNIX AND NOT APPLE)
+else ()
     add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/vendor/steam/redistributable_bin/${steamworks_sdk_OS_ARCH}/${steamworks_sdk_LIB_NAME}.${steamworks_sdk_LIB_EXT}"
