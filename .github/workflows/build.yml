@@ -45,6 +45,10 @@ jobs:
       - name: Install CMake and Ninja
         uses: lukka/get-cmake@latest
 
+      - name: Check vcpkg triplet
+        run: echo $VCPKG_DEFAULT_TRIPLET %VCPKG_DEFAULT_TRIPLET% $VCPKG_TARGET_TRIPLET %VCPKG_TARGET_TRIPLET%
+        shell: bash
+
       # Sets up vcpkg
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11.5
